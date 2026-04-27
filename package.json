@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@turf/turf": "^7.3.5",
+    "@types/geojson": "^7946.0.16",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
