@@ -9,6 +9,7 @@
 
 App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate de animales callejeros, combinando IA de reconocimiento de fotos, mapa en tiempo real, comunidad por colonia y red de veterinarias y refugios aliados.
 
+**Nombre de la app:** De Vuelta
 **Pitch en una frase:** Convierte tu colonia en una red de búsqueda activa cuando una mascota se pierde.
 
 **Repositorio:** `unicostudios-mx/vecino-peludo`
@@ -98,7 +99,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 
 | Fase | Título | Estado |
 |------|--------|--------|
-| 0 | Fundamentos (validación + cuentas + zona) | Pendiente |
+| 0 | Fundamentos (validación + cuentas + zona) | 🔄 En progreso — docs listos, pendiente acciones manuales |
 | 1 | Arquitectura y esqueleto | Pendiente |
 | 2 | Perfil de mascota | Pendiente |
 | 3 | Reportar pérdida | Pendiente |
@@ -177,3 +178,20 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-04-26: Modelo de monetización: donaciones + patrocinios, nunca paywall
 - 2026-04-26: Repositorio creado en organización Unico Studios (`unicostudios-mx/vecino-peludo`)
 - 2026-04-26: Migración a React Native con Expo queda diferida a evaluación post-piloto
+- 2026-04-28: **Nombre definitivo confirmado: "De Vuelta"** (reemplaza "Vecino Peludo" como working title)
+- 2026-04-28: Polígono de BJ obtenido de PhantomInsights/mexico-geojson (CONABIO 2023), CVEGEO 09014, 464 puntos — ver `data/SOURCE.md`
+- 2026-04-28: Paleta de color v1 definida: Primario Teal `#0F766E` · Urgencia Red `#DC2626` · Éxito Green `#16A34A` (todos WCAG AA)
+- 2026-04-28: Tono de voz híbrido: cálido/comunitario en feed, urgente/funcional en flujo de pérdida activa
+- 2026-04-28: Primer aliado objetivo: Protectora Nacional de Animales (PNA), Portales — única en BJ con veterinaria + adopción activa
+
+## 12. Archivos clave creados en Fase 0
+
+- `data/benito-juarez.geojson` — polígono oficial BJ (464 puntos, CVEGEO 09014)
+- `data/SOURCE.md` — documentación de fuente y licencia del polígono
+- `scripts/filter-bj.mjs` — script de descarga y extracción del polígono
+- `scripts/validate-polygon.ts` — función de validación lat/lng contra polígono BJ
+- `docs/validation-plan.md` — guion de entrevistas para validación del problema
+- `docs/partners-prospects.md` — mapeo de 5 veterinarias y 3 refugios en BJ
+- `docs/brand.md` — identidad v1: nombre, tono, paleta, manifiesto
+- `docs/accounts-checklist.md` — servicios a crear con orden, datos sensibles y template .env
+- `docs/phase-0-summary.md` — resumen de cierre, bloqueos y acciones pendientes
