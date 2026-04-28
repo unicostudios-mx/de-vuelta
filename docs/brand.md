@@ -1,5 +1,5 @@
-# Identidad inicial — Vecino Peludo
-**Fase 0 · Borrador v1 · Pendiente decisión final de Nicolás**
+# Identidad inicial — De Vuelta
+**Fase 0 · v1.1 · ✅ Nombre definitivo confirmado: "De Vuelta" (2026-04-28)**
 
 ---
 
@@ -50,7 +50,7 @@
 
 ---
 
-> **Decisión pendiente de Nicolás:** ¿Cuál de los tres nombres prefieres? Si eliges Vecino Peludo (A), también confirmar si se mantiene como nombre definitivo o si es working title.
+> **✅ Decisión tomada (2026-04-28):** Nombre definitivo: **De Vuelta**. No es ninguna de las tres opciones originales — es una propuesta de Nicolás que supera a las tres en brevedad, elegancia y precisión emocional. "De vuelta" significa literalmente "de regreso" — captura el deseo central del dueño y el resultado exitoso en dos palabras.
 
 ---
 
@@ -92,8 +92,8 @@
 
 ---
 
-*Cada año, miles de mascotas se pierden en la ciudad. Sus dueños publican en grupos de WhatsApp, pegan carteles, llaman a veterinarias — solos, con el tiempo en contra. Vecino Peludo existe porque el barrio tiene el poder de cambiar eso. Un avistamiento a tiempo, un vecino que sube una foto, una veterinaria que avisa: la red ya está aquí. Solo faltaba conectarla. Cuando una mascota se pierde en Benito Juárez, toda la colonia se convierte en su red de búsqueda.*
+*Cada año, miles de mascotas se pierden en la ciudad. Sus dueños publican en grupos de WhatsApp, pegan carteles, llaman a veterinarias — solos, con el tiempo en contra. De Vuelta existe porque el barrio tiene el poder de cambiar eso. Un avistamiento a tiempo, un vecino que sube una foto, una veterinaria que avisa: la red ya está aquí. Solo faltaba conectarla. Cuando una mascota se pierde en Benito Juárez, toda la colonia trabaja para traerla de vuelta.*
 
 ---
 
-> **Nota:** El manifiesto usa "Vecino Peludo" como nombre. Si se elige la Opción B o C, actualizar en consecuencia.
+> **Nota:** Manifiesto actualizado con el nombre definitivo "De Vuelta" (2026-04-28).
