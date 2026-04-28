@@ -1,8 +1,31 @@
 {
+  "name": "de-vuelta",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint",
+    "validate-polygon": "npx tsx scripts/validate-polygon.ts"
+  },
+  "dependencies": {
+    "next": "15.5.15",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
   "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@turf/turf": "^7.3.5",
     "@types/geojson": "^7946.0.16",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.15",
+    "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "^5"
   }
 }

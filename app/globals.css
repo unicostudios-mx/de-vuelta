@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* De Vuelta — brand palette */
+  --color-primary:   #0F766E; /* Teal 700  — acción principal      */
+  --color-urgency:   #DC2626; /* Red 600   — pérdida activa        */
+  --color-success:   #16A34A; /* Green 600 — caso resuelto         */
+  --color-neutral-dark:  #111827; /* Gray 900 */
+  --color-neutral-light: #F9FAFB; /* Gray 50  */
+}
+
+:root {
+  --background: #F9FAFB;
+  --foreground: #111827;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, sans-serif;
+}
