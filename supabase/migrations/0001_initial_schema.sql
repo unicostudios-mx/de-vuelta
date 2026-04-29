@@ -5,7 +5,6 @@
 -- ============================================================
 
 -- Extensiones
-create extension if not exists "uuid-ossp";
 create extension if not exists "postgis";
 
 -- ============================================================
@@ -34,7 +33,7 @@ alter table public.users enable row level security;
 -- Mascota registrada por un dueño
 -- ============================================================
 create table public.pets (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   owner_id    uuid        not null references public.users(id) on delete cascade,
   name        text        not null,
   species     text        not null check (species in ('dog', 'cat', 'other')),
@@ -53,7 +52,7 @@ alter table public.pets enable row level security;
 -- Reporte de mascota perdida, con ubicación georreferenciada
 -- ============================================================
 create table public.lost_reports (
-  id              uuid        primary key default uuid_generate_v4(),
+  id              uuid        primary key default gen_random_uuid(),
   pet_id          uuid        not null references public.pets(id) on delete cascade,
   reporter_id     uuid        not null references public.users(id),
   status          text        not null default 'active'
@@ -86,7 +85,7 @@ alter table public.lost_reports enable row level security;
 -- Avistamiento reportado por un vecino
 -- ============================================================
 create table public.sightings (
-  id              uuid        primary key default uuid_generate_v4(),
+  id              uuid        primary key default gen_random_uuid(),
   report_id       uuid        not null references public.lost_reports(id) on delete cascade,
   spotter_id      uuid        not null references public.users(id),
   lat             numeric(9,6) not null
@@ -114,7 +113,7 @@ alter table public.sightings enable row level security;
 -- Coincidencia confirmada entre avistamiento y reporte
 -- ============================================================
 create table public.matches (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   report_id   uuid        not null references public.lost_reports(id) on delete cascade,
   sighting_id uuid        not null references public.sightings(id) on delete cascade,
   confidence  numeric(4,3)  check (confidence between 0 and 1),  -- score IA (Fase 6)
@@ -132,7 +131,7 @@ alter table public.matches enable row level security;
 -- Notificaciones push/in-app enviadas a usuarios
 -- ============================================================
 create table public.notifications (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   user_id     uuid        not null references public.users(id) on delete cascade,
   type        text        not null
                 check (type in ('new_sighting', 'match_found', 'report_nearby',
@@ -152,7 +151,7 @@ alter table public.notifications enable row level security;
 -- Veterinarias y refugios aliados
 -- ============================================================
 create table public.partners (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   user_id     uuid        references public.users(id) on delete set null,
   name        text        not null,
   type        text        not null check (type in ('vet', 'shelter', 'rescue')),
@@ -182,7 +181,7 @@ alter table public.partners enable row level security;
 -- Mascotas en adopción publicadas por partners (Fase 4)
 -- ============================================================
 create table public.adoptable_pets (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   partner_id  uuid        not null references public.partners(id) on delete cascade,
   name        text        not null,
   species     text        not null check (species in ('dog', 'cat', 'other')),
@@ -202,7 +201,7 @@ alter table public.adoptable_pets enable row level security;
 -- Historias de reencuentro para comunidad (Fase 7)
 -- ============================================================
 create table public.animal_stories (
-  id          uuid        primary key default uuid_generate_v4(),
+  id          uuid        primary key default gen_random_uuid(),
   report_id   uuid        references public.lost_reports(id) on delete set null,
   author_id   uuid        not null references public.users(id),
   title       text        not null,
