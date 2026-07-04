@@ -1,14 +1,15 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { publicEnv, serverEnv } from "@/lib/env";
 import type { Database } from "@/types/database";
 
 export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    publicEnv.supabaseUrl,
+    publicEnv.supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -31,8 +32,8 @@ export async function createClient() {
 // Service-role client for admin operations (server only — never expose to browser).
 export function createAdminClient() {
   return createSupabaseClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    publicEnv.supabaseUrl,
+    serverEnv.supabaseServiceRoleKey,
     {
       auth: {
         autoRefreshToken: false,
