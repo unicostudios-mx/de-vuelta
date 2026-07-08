@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- De Vuelta — icono maskable: el contenido vive dentro del 80% central (zona segura) -->
+  <rect width="512" height="512" fill="#0F766E"/>
+  <g fill="#F9FAFB" transform="translate(256 256) scale(0.72) translate(-256 -256)">
+    <ellipse cx="176" cy="176" rx="38" ry="50" transform="rotate(-18 176 176)"/>
+    <ellipse cx="336" cy="176" rx="38" ry="50" transform="rotate(18 336 176)"/>
+    <ellipse cx="108" cy="264" rx="34" ry="46" transform="rotate(-32 108 264)"/>
+    <ellipse cx="404" cy="264" rx="34" ry="46" transform="rotate(32 404 264)"/>
+    <path d="M256 240c-52 0-104 44-116 96-7 30 8 60 40 66 28 5 52-14 76-14s48 19 76 14c32-6 47-36 40-66-12-52-64-96-116-96z"/>
+  </g>
+</svg>

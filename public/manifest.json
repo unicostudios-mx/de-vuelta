@@ -1,0 +1,26 @@
+{
+  "name": "De Vuelta",
+  "short_name": "De Vuelta",
+  "description": "Red hiperlocal para reunir mascotas perdidas con sus dueños en la Alcaldía Benito Juárez, CDMX.",
+  "lang": "es-MX",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0F766E",
+  "background_color": "#F9FAFB",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

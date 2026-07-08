@@ -8,6 +8,18 @@ export const metadata: Metadata = {
   applicationName: "De Vuelta",
   keywords: ["mascotas perdidas", "Benito Juárez", "CDMX", "rescate animal"],
   authors: [{ name: "Unico Studios" }],
+  manifest: "/manifest.json",
+  icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    // iOS no soporta SVG en apple-touch-icon; se sirve el mismo SVG como
+    // mejor esfuerzo hasta generar PNGs (decisión: solo SVG en Fase 1).
+    apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "De Vuelta",
+  },
 };
 
 export const viewport: Viewport = {
