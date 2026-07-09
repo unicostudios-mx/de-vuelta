@@ -1,17 +1,70 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-@theme inline {
-  /* De Vuelta — brand palette */
-  --color-primary:   #0F766E; /* Teal 700  — acción principal      */
-  --color-urgency:   #DC2626; /* Red 600   — pérdida activa        */
-  --color-success:   #16A34A; /* Green 600 — caso resuelto         */
-  --color-neutral-dark:  #111827; /* Gray 900 */
-  --color-neutral-light: #F9FAFB; /* Gray 50  */
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ── Tokens de diseño — shadcn/ui integrado con la paleta De Vuelta ────────
+   Primario  #0F766E (Teal 700)  — acción principal
+   Urgencia  #DC2626 (Red 600)   — pérdida activa (= destructive)
+   Éxito     #16A34A (Green 600) — caso resuelto
+   Todos WCAG AA — ver docs/brand.md                                        */
 
 :root {
-  --background: #F9FAFB;
-  --foreground: #111827;
+  --radius: 0.625rem;
+
+  --background: #f9fafb; /* Gray 50 */
+  --foreground: #111827; /* Gray 900 */
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #0f766e; /* Teal 700 — De Vuelta */
+  --primary-foreground: #f9fafb;
+  --secondary: #f3f4f6; /* Gray 100 */
+  --secondary-foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280; /* Gray 500 */
+  --accent: #f0fdfa; /* Teal 50 */
+  --accent-foreground: #0f766e;
+  --destructive: #dc2626; /* Red 600 — urgencia */
+  --destructive-foreground: #f9fafb;
+  --border: #e5e7eb; /* Gray 200 */
+  --input: #e5e7eb;
+  --ring: #0f766e;
+
+  /* Extensiones de marca */
+  --urgency: #dc2626;
+  --success: #16a34a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-urgency: var(--urgency);
+  --color-success: var(--success);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 body {

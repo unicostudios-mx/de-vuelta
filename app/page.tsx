@@ -1,11 +1,11 @@
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 text-center">
-      <h1 className="text-4xl font-bold tracking-tight text-[#0F766E] mb-6">
+      <h1 className="text-4xl font-bold tracking-tight text-primary mb-6">
         De Vuelta
       </h1>
 
-      <p className="max-w-prose text-base leading-relaxed text-[#111827] mb-8">
+      <p className="max-w-prose text-base leading-relaxed text-foreground mb-8">
         Cada año, miles de mascotas se pierden en la ciudad. Sus dueños publican
         en grupos de WhatsApp, pegan carteles, llaman a veterinarias — solos,
         con el tiempo en contra. De Vuelta existe porque el barrio tiene el
@@ -15,7 +15,7 @@ export default function Home() {
         colonia trabaja para traerla de vuelta.
       </p>
 
-      <p className="text-sm text-[#6B7280]">
+      <p className="text-sm text-muted-foreground">
         Próximamente — piloto en Alcaldía Benito Juárez, CDMX
       </p>
     </main>

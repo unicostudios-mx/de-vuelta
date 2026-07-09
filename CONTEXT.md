@@ -100,7 +100,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 | Fase | Título | Estado |
 |------|--------|--------|
 | 0 | Fundamentos (validación + cuentas + zona) | 🔄 En progreso — docs listos, pendiente acciones manuales |
-| 1 | Arquitectura y esqueleto | Pendiente |
+| 1 | Arquitectura y esqueleto | ✅ Completa — pendiente solo conectar Vercel (manual) |
 | 2 | Perfil de mascota | Pendiente |
 | 3 | Reportar pérdida | Pendiente |
 | 4 | Reportar avistamiento | Pendiente |
@@ -133,7 +133,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 
 ---
 
-## 8. Esquema de datos (preliminar — se refina en Fase 1)
+## 8. Esquema de datos (aplicado en Supabase — ver `supabase/migrations/0001` y `0002`)
 
 - `users` — auth, perfil, ubicación de referencia
 - `pets` — mascotas registradas (foto, nombre, raza, color, edad, marcas, datos médicos, dueño)
@@ -183,6 +183,14 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-04-28: Paleta de color v1 definida: Primario Teal `#0F766E` · Urgencia Red `#DC2626` · Éxito Green `#16A34A` (todos WCAG AA)
 - 2026-04-28: Tono de voz híbrido: cálido/comunitario en feed, urgente/funcional en flujo de pérdida activa
 - 2026-04-28: Primer aliado objetivo: Protectora Nacional de Animales (PNA), Portales — única en BJ con veterinaria + adopción activa
+- 2026-07-04: Schema v1 aplicado en Supabase (9 tablas, PostGIS, RLS deny-all, CHECK lat/lng); `gen_random_uuid()` en vez de `uuid-ossp` (en Supabase la extensión vive en el schema `extensions` y rompe defaults sin prefijo)
+- 2026-07-04: `sightings.report_id` nullable + columna `needs_help` — habilita el flujo de animal callejero sin reporte previo (migración 0002)
+- 2026-07-04: FKs a `users` con `ON DELETE SET NULL` en reportes/avistamientos/matches/historias — el contenido comunitario sobrevive si el usuario borra su cuenta
+- 2026-07-08: Build de producción con webpack (`next build` sin `--turbopack`): Serwist inyecta el service worker vía plugin de webpack que Turbopack no ejecuta; `dev` sigue en Turbopack
+- 2026-07-08: Iconos PWA solo SVG (decisión de Fase 1); PNGs para apple-touch-icon pendientes
+- 2026-07-08: shadcn/ui configurado a mano (`components.json`, `lib/utils.ts`, tokens en `globals.css`) — el CLI no alcanza ui.shadcn.com desde el entorno remoto; `npx shadcn add <componente>` debe correrse en máquina local
+- 2026-07-08: `mapbox-gl` v3 sin `@types/mapbox-gl` (v3 trae sus propios types; el de DefinitelyTyped es stub deprecado)
+- 2026-07-08: El polígono BJ se importa vía `lib/geo/bj-polygon.json`, generado por `scripts/prepare-geo.mjs` en `postinstall` desde el `.geojson` canónico (Next.js solo importa `.json` nativamente)
 
 ## 12. Archivos clave creados en Fase 0
 
@@ -195,3 +203,26 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - `docs/brand.md` — identidad v1: nombre, tono, paleta, manifiesto
 - `docs/accounts-checklist.md` — servicios a crear con orden, datos sensibles y template .env
 - `docs/phase-0-summary.md` — resumen de cierre, bloqueos y acciones pendientes
+
+## 13. Archivos clave creados en Fase 1
+
+**Migraciones (aplicadas contra Supabase el 2026-07-04):**
+- `supabase/migrations/0001_initial_schema.sql` — 9 tablas, PostGIS, RLS deny-all, triggers `updated_at`
+- `supabase/migrations/0002_schema_fixes.sql` — sightings sin reporte, ON DELETE SET NULL, especies ampliadas, índices
+
+**Infraestructura de la app:**
+- `lib/supabase/client.ts` / `server.ts` / `middleware.ts` — clientes @supabase/ssr (browser, SSR + admin, refresh de sesión)
+- `middleware.ts` — middleware raíz de Next.js (sesiones Supabase)
+- `types/database.ts` — tipos de las 9 tablas + enums (regenerar: `supabase gen types typescript --linked`)
+- `lib/env.ts` — acceso validado a variables de entorno (publicEnv / serverEnv)
+- `lib/geo/validate-bj.ts` — `isInBenitoJuarez(lat, lng)` y `getBenitoJuarezPolygon()`
+- `scripts/prepare-geo.mjs` — genera `lib/geo/bj-polygon.json` en postinstall
+- `lib/utils.ts` + `components.json` — base shadcn/ui (componentes se agregan con CLI local)
+
+**PWA:**
+- `app/sw.ts` — service worker Serwist
+- `public/manifest.json` — manifest es-MX, standalone, theme #0F766E
+- `public/icons/icon.svg` + `icon-maskable.svg` — iconos SVG (huella / teal)
+
+**Pendiente manual para cerrar el ciclo de deploy:**
+- Conectar repo a Vercel + configurar env vars (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_MAPBOX_TOKEN)
