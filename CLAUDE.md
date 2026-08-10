@@ -7,16 +7,20 @@
 
 PWA hiperlocal para reunir mascotas perdidas con sus dueños en la Alcaldía
 Benito Juárez, CDMX. Next.js 15 + Supabase (PostGIS) + Mapbox + Serwist.
-Repo: `unicostudios-mx/vecino-peludo`, rama de trabajo: `main` (push directo,
-NO crear ramas `claude/` sin permiso explícito).
+Repo: `unicostudios-mx/de-vuelta` (renombrado; antes `vecino-peludo`), rama
+de trabajo: `main` (push directo, NO crear ramas `claude/` sin permiso
+explícito). Producción: `de-vuelta.vercel.app`.
 
 ## Estado actual
 
 - **Fase 0**: docs listos; pendientes manuales (entrevistas, dominio).
-- **Fase 1**: ✅ completa. Schema aplicado en Supabase (migraciones 0001+0002),
-  clientes SSR, PWA, validador del polígono BJ, shadcn base, mapbox-gl.
-- **Siguiente**: conectar Vercel (CLI local autenticado) y arrancar Fase 2
-  (perfil de mascota: auth + CRUD + políticas RLS reales).
+- **Fase 1**: ✅ completa y desplegada en Vercel.
+- **Fase 2**: ✅ completa. Auth email+contraseña, CRUD de mascotas con fotos
+  en Storage, RLS real en `users`/`pets` (migración 0003), verificada
+  end-to-end. OJO: "Confirm email" está apagado en Supabase durante
+  desarrollo — reactivar antes del piloto.
+- **Siguiente**: Fase 3 (reportar pérdida: `lost_reports` + mapa Mapbox +
+  validación del polígono BJ).
 
 ## Comandos
 

@@ -5,7 +5,7 @@ entrada nueva (con fecha) cuando cierres algo importante o dejes algo a
 medias — no reescribas entradas viejas, solo agrega. Si una fase completa
 se cierra, refleja eso también en `CONTEXT.md` (fuente de verdad oficial).
 
-## 2026-07-29
+## 2026-07-26 → 2026-08-09 (sesión larga: deploy + Fase 2)
 
 - **Fase 1 cerrada y desplegada.** Proyecto conectado a Vercel
   (`unicostudios-mxs-projects/de-vuelta`), producción sirviendo en
@@ -30,12 +30,25 @@ se cierra, refleja eso también en `CONTEXT.md` (fuente de verdad oficial).
     (`app/mascotas/`), usando shadcn/ui (`button input label textarea
     select card avatar` — sin el componente `form`, ver troubleshooting.md).
   - `npm run build` y `npm run lint` pasan limpio.
-  - **Pendiente al cierre de esta sesión**: terminar de probar el flujo
-    end-to-end en el navegador (login → crear mascota con foto → editar →
-    borrar) y verificar aislamiento de RLS entre dos cuentas distintas
-    (crear una segunda cuenta de prueba y confirmar que no ve las mascotas
-    de la primera). Ver `troubleshooting.md` por los dos bloqueos de
-    Supabase que se resolvieron en el camino (llaves legacy deshabilitadas,
-    ubicación real del toggle "Confirm email" — se desactivó para
-    simplificar las pruebas locales, decidir si se reactiva antes de
-    lanzar el piloto).
+  - Flujo end-to-end verificado contra el proyecto real de Supabase:
+    signup → auto-login → crear/editar/borrar mascota → foto sube a Storage
+    y se sirve pública → aislamiento de RLS confirmado entre dos cuentas
+    distintas. Commiteado y pusheado a `main` (`49bed38`).
+
+### ⚠️ Pendiente crítico antes de invitar usuarios reales (Fase 9)
+- **"Confirm email" está APAGADO** en Supabase (Authentication → Sign
+  In/Providers → sección "User Signups"). Se desactivó a propósito para
+  poder probar el flujo de signup sin depender de un inbox real mientras
+  seguimos construyendo. Mientras esté apagado, cualquiera puede
+  registrarse con un correo inventado sin verificarlo — aceptable en
+  desarrollo, **no aceptable para el piloto real**. Reactivarlo es un
+  toggle de un click (ver troubleshooting.md por dónde vive) — hacerlo como
+  parte del checklist de lanzamiento de Fase 9, no antes, porque mientras
+  seguimos desarrollando features conviene poder crear cuentas de prueba
+  sin fricción.
+- ~~**Cuentas y mascotas de prueba**~~ — RESUELTO 2026-08-09: las 3 cuentas
+  de prueba se borraron desde el dashboard (cascade limpió `users`/`pets`);
+  tabla `pets` verificada en 0 registros.
+- **Fase 2 cerrada formalmente el 2026-08-09**: CONTEXT.md y CLAUDE.md
+  actualizados (fases, decisiones, archivos clave, repo renombrado).
+  Siguiente: Fase 3 (reportar pérdida).

@@ -100,8 +100,8 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 | Fase | Título | Estado |
 |------|--------|--------|
 | 0 | Fundamentos (validación + cuentas + zona) | 🔄 En progreso — docs listos, pendiente acciones manuales |
-| 1 | Arquitectura y esqueleto | ✅ Completa — pendiente solo conectar Vercel (manual) |
-| 2 | Perfil de mascota | Pendiente |
+| 1 | Arquitectura y esqueleto | ✅ Completa — desplegada en Vercel (`de-vuelta.vercel.app`) |
+| 2 | Perfil de mascota | ✅ Completa — auth + CRUD + RLS real, verificada end-to-end |
 | 3 | Reportar pérdida | Pendiente |
 | 4 | Reportar avistamiento | Pendiente |
 | 5 | Notificaciones geográficas | Pendiente |
@@ -191,6 +191,13 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-07-08: shadcn/ui configurado a mano (`components.json`, `lib/utils.ts`, tokens en `globals.css`) — el CLI no alcanza ui.shadcn.com desde el entorno remoto; `npx shadcn add <componente>` debe correrse en máquina local
 - 2026-07-08: `mapbox-gl` v3 sin `@types/mapbox-gl` (v3 trae sus propios types; el de DefinitelyTyped es stub deprecado)
 - 2026-07-08: El polígono BJ se importa vía `lib/geo/bj-polygon.json`, generado por `scripts/prepare-geo.mjs` en `postinstall` desde el `.geojson` canónico (Next.js solo importa `.json` nativamente)
+- 2026-07-26: Repo de GitHub renombrado a `unicostudios-mx/de-vuelta` (antes `vecino-peludo`); Vercel conectado al repo nuevo, proyecto `unicostudios-mxs-projects/de-vuelta`, producción en `de-vuelta.vercel.app`
+- 2026-07-26: En Vercel, las env vars `NEXT_PUBLIC_*` NO deben marcarse "Sensitive" (no se inyectan en build time y el middleware truena); solo `SUPABASE_SERVICE_ROLE_KEY` va Sensitive
+- 2026-08-09: Auth de Fase 2 = email + contraseña (no magic link): el flujo de emergencia no puede depender de la latencia del correo
+- 2026-08-09: Migración 0003 aplicada — RLS real en `users`/`pets` (scoped al dueño), trigger `handle_new_user` que sincroniza `auth.users` → `public.users`, bucket Storage `pet-photos` (lectura pública, escritura solo del dueño en su carpeta `{owner_id}/...`)
+- 2026-08-09: Llaves legacy (anon/service_role) re-habilitadas en Supabase — el proyecto las traía deshabilitadas por default y el código las usa; "Confirm email" APAGADO durante desarrollo, **reactivar antes del piloto (Fase 9)**
+- 2026-08-09: Formularios con Server Actions + `useActionState` (React 19), NO react-hook-form: el componente `form` de shadcn arrastra un conflicto de peer deps `zod@3` vs `zod@4` (requerido por Serwist)
+- 2026-08-09: Fase 2 verificada end-to-end contra Supabase real (signup → CRUD con foto → aislamiento RLS entre cuentas) y pusheada a `main`
 
 ## 12. Archivos clave creados en Fase 0
 
@@ -224,5 +231,26 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - `public/manifest.json` — manifest es-MX, standalone, theme #0F766E
 - `public/icons/icon.svg` + `icon-maskable.svg` — iconos SVG (huella / teal)
 
-**Pendiente manual para cerrar el ciclo de deploy:**
-- Conectar repo a Vercel + configurar env vars (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_MAPBOX_TOKEN)
+**Deploy (cerrado el 2026-07-26):**
+- Vercel conectado a `unicostudios-mx/de-vuelta`, env vars configuradas, producción en `de-vuelta.vercel.app`
+
+## 14. Archivos clave creados en Fase 2
+
+**Migración (aplicada contra Supabase el 2026-08-09):**
+- `supabase/migrations/0003_pet_profile_rls.sql` — trigger `handle_new_user`, políticas RLS de `users`/`pets`, bucket `pet-photos` + políticas de `storage.objects`
+
+**Auth:**
+- `app/(auth)/login/page.tsx` / `signup/page.tsx` / `actions.ts` — formularios cliente (`useActionState`) + Server Actions `signIn`/`signUp` con validación zod
+- `app/auth/confirm/route.ts` — verificación del link de confirmación (`verifyOtp`)
+- `app/logout/route.ts` — signOut vía POST
+- `lib/supabase/middleware.ts` — extendido: protege `/mascotas`, redirige sesiones activas fuera de `/login`/`/signup`
+
+**CRUD de mascotas:**
+- `app/mascotas/page.tsx` (lista) / `nueva/page.tsx` / `[id]/editar/page.tsx`
+- `app/mascotas/actions.ts` — `createPet`/`updatePet`/`deletePet` con subida de fotos a Storage (`{owner_id}/{uuid}-{nombre}`)
+- `components/pet-form.tsx` / `delete-pet-button.tsx`
+- `components/ui/` — shadcn: button, input, label, textarea, select, card, avatar (sin `form`, ver decisión 2026-08-09)
+
+**Infra de sesión local:**
+- `.claude/skills/de-vuelta/` — skill de proyecto con troubleshooting y update-log entre sesiones
+- `.claude/launch.json` — config del dev server para el preview del navegador
