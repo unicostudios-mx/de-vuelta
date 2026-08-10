@@ -52,3 +52,34 @@ se cierra, refleja eso también en `CONTEXT.md` (fuente de verdad oficial).
 - **Fase 2 cerrada formalmente el 2026-08-09**: CONTEXT.md y CLAUDE.md
   actualizados (fases, decisiones, archivos clave, repo renombrado).
   Siguiente: Fase 3 (reportar pérdida).
+
+## 2026-08-09 (continuación: Fase 3 completa)
+
+- **Fase 3 construida y verificada end-to-end** en la misma sesión:
+  migración 0004 (RLS de `lost_reports`), `LocationPicker` con Mapbox +
+  polígono BJ, rutas `/reportes` (lista/nuevo/detalle/resolver), CTA
+  "Reportar pérdida" en cards de mascotas, `/reportes` protegido en
+  middleware.
+- **Verificaciones que pasaron**: crear reporte (Del Valle) → badge
+  Perdido; bypass del cliente con coordenadas de Coyoacán → rechazado
+  server-side por `isInBenitoJuarez()`; detalle + resolver → badge
+  Resuelto; cuenta B no ve reportes de A (lista vacía + 404 por URL
+  directa); insert con `pet_id` ajeno (inyectando option en el select de
+  Radix) → rechazado por la policy de propiedad; `validate-polygon`,
+  build y lint limpios. Datos de prueba (f3a/f3b) borrados al final.
+- **Bug encontrado y corregido durante las pruebas**: el schema zod usaba
+  `.max(new Date())` a nivel de módulo — el `new Date()` se congela cuando
+  el server carga el módulo y todo envío posterior parecía "fecha futura".
+  Fix: `.refine((d) => d.getTime() <= Date.now() + 60_000)`. Documentado
+  en CONTEXT.md como decisión/gotcha.
+- **Limitación del entorno**: el panel de navegador de esta sesión no
+  compone el canvas de Mapbox (viewport 0x0), así que el mapa se verificó
+  por evidencia indirecta: canvas inicializado, token válido contra la
+  styles API (200), cero errores de consola, y el flujo completo vía
+  inputs. **Pendiente al retomar: un vistazo visual humano al mapa** (que
+  el polígono y el pin se vean bien) — 2 minutos en `npm run dev`.
+- **Deuda menor anotada**: rutas con mapa ~620-650 kB First Load por
+  `mapbox-gl`; candidato a `next/dynamic` si duele. Estado `expired` de
+  reportes sin implementar (requiere job programado, fase futura).
+- Siguiente: Fase 4 (avistamientos + lado público con ubicación
+  aproximada — el diseño de privacidad de coordenadas se hace ahí).

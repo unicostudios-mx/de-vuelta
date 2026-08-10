@@ -19,8 +19,13 @@ explícito). Producción: `de-vuelta.vercel.app`.
   en Storage, RLS real en `users`/`pets` (migración 0003), verificada
   end-to-end. OJO: "Confirm email" está apagado en Supabase durante
   desarrollo — reactivar antes del piloto.
-- **Siguiente**: Fase 3 (reportar pérdida: `lost_reports` + mapa Mapbox +
-  validación del polígono BJ).
+- **Fase 3**: ✅ completa. Reportes de pérdida con mapa Mapbox
+  (`LocationPicker` reutilizable), invariante BJ validado client- y
+  server-side, RLS de `lost_reports` (migración 0004), verificada
+  end-to-end incluyendo intentos de bypass.
+- **Siguiente**: Fase 4 (reportar avistamiento: lado público de los
+  reportes con ubicación aproximada + flujo de vecinos, reutilizando
+  `LocationPicker`).
 
 ## Comandos
 

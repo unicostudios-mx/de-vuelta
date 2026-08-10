@@ -54,6 +54,9 @@ export default async function RootLayout({
                 <Link href="/mascotas" className="text-foreground hover:text-primary">
                   Mis mascotas
                 </Link>
+                <Link href="/reportes" className="text-foreground hover:text-primary">
+                  Reportes
+                </Link>
                 <form action="/logout" method="post">
                   <Button type="submit" variant="ghost" size="sm">
                     Salir

@@ -102,7 +102,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 | 0 | Fundamentos (validación + cuentas + zona) | 🔄 En progreso — docs listos, pendiente acciones manuales |
 | 1 | Arquitectura y esqueleto | ✅ Completa — desplegada en Vercel (`de-vuelta.vercel.app`) |
 | 2 | Perfil de mascota | ✅ Completa — auth + CRUD + RLS real, verificada end-to-end |
-| 3 | Reportar pérdida | Pendiente |
+| 3 | Reportar pérdida | ✅ Completa — mapa Mapbox + invariante BJ + RLS, verificada end-to-end |
 | 4 | Reportar avistamiento | Pendiente |
 | 5 | Notificaciones geográficas | Pendiente |
 | 6 | Matching (manual + IA) | Pendiente |
@@ -198,6 +198,12 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-08-09: Llaves legacy (anon/service_role) re-habilitadas en Supabase — el proyecto las traía deshabilitadas por default y el código las usa; "Confirm email" APAGADO durante desarrollo, **reactivar antes del piloto (Fase 9)**
 - 2026-08-09: Formularios con Server Actions + `useActionState` (React 19), NO react-hook-form: el componente `form` de shadcn arrastra un conflicto de peer deps `zod@3` vs `zod@4` (requerido por Serwist)
 - 2026-08-09: Fase 2 verificada end-to-end contra Supabase real (signup → CRUD con foto → aislamiento RLS entre cuentas) y pusheada a `main`
+- 2026-08-09: Fase 3 = solo el lado del dueño (crear/listar/resolver sus reportes); la visibilidad pública con ubicación aproximada se diseña en Fase 4 junto con avistamientos, que es donde se necesita
+- 2026-08-09: Migración 0004 — RLS de `lost_reports` scoped al dueño, insert exige que el pet le pertenezca (exists sobre `pets`), **sin policy de delete**: los reportes se resuelven, no se borran (historial para Fase 7)
+- 2026-08-09: `LocationPicker` (`components/location-picker.tsx`) reutilizable para Fase 4: mapa Mapbox con capa del polígono BJ, pin validado client-side + re-validación server-side en la action (el invariante real vive en el servidor)
+- 2026-08-09: Gotcha zod: nunca `.max(new Date())` en schemas a nivel de módulo — se congela al cargar el server; usar `.refine((d) => d.getTime() <= Date.now() + 60_000)` (encontrado en pruebas, ya corregido)
+- 2026-08-09: `datetime-local` se convierte a ISO/UTC en el cliente (hidden input) — el navegador conoce la zona del usuario, el servidor de Vercel corre en UTC
+- 2026-08-09: Deuda menor: rutas con mapa pesan ~620-650 kB First Load por `mapbox-gl`; candidato a `next/dynamic` cuando duela
 
 ## 12. Archivos clave creados en Fase 0
 
@@ -254,3 +260,16 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 **Infra de sesión local:**
 - `.claude/skills/de-vuelta/` — skill de proyecto con troubleshooting y update-log entre sesiones
 - `.claude/launch.json` — config del dev server para el preview del navegador
+
+## 15. Archivos clave creados en Fase 3
+
+**Migración (aplicada contra Supabase el 2026-08-09):**
+- `supabase/migrations/0004_lost_reports_rls.sql` — RLS de `lost_reports`: insert con verificación de propiedad del pet, select/update solo del dueño, sin delete
+
+**Mapa:**
+- `components/location-picker.tsx` — mapa Mapbox reutilizable (Fase 4 lo usará para avistamientos): polígono BJ como capa, pin validado con `isInBenitoJuarez()`, coordenada expuesta como inputs hidden
+
+**Reportes:**
+- `app/reportes/page.tsx` (lista con badges de estado) / `nuevo/page.tsx` / `[id]/page.tsx` (detalle + mini-mapa readOnly + resolver)
+- `app/reportes/actions.ts` — `createReport` (zod + re-validación server-side del polígono) / `resolveReport`
+- `components/report-form.tsx` (conversión datetime-local → ISO/UTC en cliente) / `report-status-badge.tsx` (rojo urgencia SOLO en "Perdido") / `resolve-report-button.tsx`

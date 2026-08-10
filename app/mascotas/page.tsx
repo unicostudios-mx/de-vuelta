@@ -41,8 +41,11 @@ export default async function MascotasPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {pets.map((pet) => (
-            <Link key={pet.id} href={`/mascotas/${pet.id}/editar`}>
-              <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
+            <Card
+              key={pet.id}
+              className="h-full overflow-hidden transition-shadow hover:shadow-md"
+            >
+              <Link href={`/mascotas/${pet.id}/editar`}>
                 {pet.photo_urls[0] && (
                   <div className="relative aspect-square w-full">
                     <Image
@@ -62,8 +65,16 @@ export default async function MascotasPage() {
                     {pet.breed ? ` · ${pet.breed}` : ""}
                   </p>
                 </CardContent>
-              </Card>
-            </Link>
+              </Link>
+              <CardContent className="pt-0">
+                <Link
+                  href={`/reportes/nuevo?pet=${pet.id}`}
+                  className="text-sm font-medium text-destructive hover:underline"
+                >
+                  Reportar pérdida
+                </Link>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
