@@ -8,6 +8,16 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === "development",
 });
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ypmlsydglregsuzbgric.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
+};
 
 export default withSerwist(nextConfig);

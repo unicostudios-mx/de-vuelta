@@ -46,3 +46,7 @@ public/swe-worker-*.js
 
 # Vercel
 .vercel
+.env*
+
+# Supabase CLI local cache
+supabase/.temp/

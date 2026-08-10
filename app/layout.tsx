@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import "./globals.css";
+import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "De Vuelta",
@@ -28,14 +31,49 @@ export const viewport: Viewport = {
   themeColor: "#0F766E",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html lang="es-MX">
-      <body>{children}</body>
+      <body>
+        <header className="flex items-center justify-between border-b border-border px-6 py-4">
+          <Link href="/" className="font-bold text-primary">
+            De Vuelta
+          </Link>
+          <nav className="flex items-center gap-4 text-sm">
+            {user ? (
+              <>
+                <Link href="/mascotas" className="text-foreground hover:text-primary">
+                  Mis mascotas
+                </Link>
+                <form action="/logout" method="post">
+                  <Button type="submit" variant="ghost" size="sm">
+                    Salir
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="text-foreground hover:text-primary">
+                  Iniciar sesión
+                </Link>
+                <Link href="/signup" className="text-foreground hover:text-primary">
+                  Registrarme
+                </Link>
+              </>
+            )}
+          </nav>
+        </header>
+        {children}
+      </body>
     </html>
   );
 }

@@ -30,7 +30,25 @@ export async function updateSession(request: NextRequest) {
   // Refreshes an expired session and writes updated cookies to the response.
   // Do not add logic between createServerClient and getUser() — it breaks
   // session refresh reliability.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const isAuthRoute = pathname === "/login" || pathname === "/signup";
+  const isProtectedRoute = pathname.startsWith("/mascotas");
+
+  if (!user && isProtectedRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  if (user && isAuthRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/mascotas";
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }
