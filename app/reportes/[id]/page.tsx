@@ -30,6 +30,13 @@ export default async function ReporteDetallePage({
 
   if (!report) notFound();
 
+  // RLS: como dueño del reporte, ve todos los avistamientos asociados.
+  const { data: sightings } = await supabase
+    .from("sightings")
+    .select("*")
+    .eq("report_id", id)
+    .order("spotted_at", { ascending: false });
+
   return (
     <main className="mx-auto max-w-lg px-6 py-10">
       <div className="mb-6 flex items-center justify-between">
@@ -86,12 +93,52 @@ export default async function ReporteDetallePage({
         )}
       </dl>
 
-      <div className="mb-6">
+      <div className="mb-2">
         <LocationPicker
           readOnly
           initial={{ lat: report.last_seen_lat, lng: report.last_seen_lng }}
+          markers={(sightings ?? []).map((s) => ({ lat: s.lat, lng: s.lng }))}
         />
       </div>
+      {sightings && sightings.length > 0 && (
+        <p className="mb-6 text-xs text-muted-foreground">
+          Pin rojo: donde la viste tú. Pins verdes: avistamientos de vecinos.
+        </p>
+      )}
+
+      <section className="mb-6">
+        <h2 className="mb-3 text-lg font-semibold text-foreground">
+          Avistamientos de vecinos
+        </h2>
+        {!sightings || sightings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Todavía no hay avistamientos. Comparte el reporte con tus vecinos
+            — entre más ojos, más rápido vuelve.
+          </p>
+        ) : (
+          <ul className="space-y-4">
+            {sightings.map((s) => (
+              <li key={s.id} className="rounded-md border border-border p-4">
+                <p className="text-sm font-medium text-foreground">
+                  {dateFmt.format(new Date(s.spotted_at))}
+                </p>
+                {s.notes && (
+                  <p className="mt-1 text-sm text-muted-foreground">{s.notes}</p>
+                )}
+                {s.photo_urls[0] && (
+                  <Image
+                    src={s.photo_urls[0]}
+                    alt="Foto del avistamiento"
+                    width={320}
+                    height={180}
+                    className="mt-2 rounded-md object-cover"
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {report.status === "active" && (
         <ResolveReportButton action={resolveReport.bind(null, report.id)} />

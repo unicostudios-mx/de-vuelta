@@ -103,7 +103,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 | 1 | Arquitectura y esqueleto | ✅ Completa — desplegada en Vercel (`de-vuelta.vercel.app`) |
 | 2 | Perfil de mascota | ✅ Completa — auth + CRUD + RLS real, verificada end-to-end |
 | 3 | Reportar pérdida | ✅ Completa — mapa Mapbox + invariante BJ + RLS, verificada end-to-end |
-| 4 | Reportar avistamiento | Pendiente |
+| 4 | Reportar avistamiento | ✅ Completa — lado público con ubicación aproximada + flujo de vecinos, verificada end-to-end |
 | 5 | Notificaciones geográficas | Pendiente |
 | 6 | Matching (manual + IA) | Pendiente |
 | 7 | Capa comunitaria + adopción curada | Pendiente |
@@ -204,6 +204,11 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-08-09: Gotcha zod: nunca `.max(new Date())` en schemas a nivel de módulo — se congela al cargar el server; usar `.refine((d) => d.getTime() <= Date.now() + 60_000)` (encontrado en pruebas, ya corregido)
 - 2026-08-09: `datetime-local` se convierte a ISO/UTC en el cliente (hidden input) — el navegador conoce la zona del usuario, el servidor de Vercel corre en UTC
 - 2026-08-09: Deuda menor: rutas con mapa pesan ~620-650 kB First Load por `mapbox-gl`; candidato a `next/dynamic` cuando duela
+- 2026-08-12: Fase 4 — avistamientos requieren cuenta (control de spam; Fases 5/7 necesitan identidad); flujo de callejeros (`needs_help` sin reporte) diferido a Fase 7
+- 2026-08-12: Privacidad geo pública = snap determinístico a cuadrícula de 0.003° (~300 m) en la view `active_reports_public` — snap y no jitter porque el jitter se puede promediar entre lecturas para recuperar el punto real
+- 2026-08-12: `active_reports_public` (migración 0005) es LA única superficie pública de datos: view con permisos de owner que atraviesa el RLS deny-all exponiendo solo columnas seguras de reportes activos; grant a `anon`+`authenticated`
+- 2026-08-12: Patrón para policies que referencian tablas ajenas: las subqueries de una policy corren con el RLS del usuario consultante → función `security definer` (`is_active_report`) para que el vecino pueda validar "reporte existe y está activo" sin poder leer `lost_reports`
+- 2026-08-12: Flujo `?next=` en auth (middleware + hidden input en login/signup, validado contra open-redirect: solo paths `/...` y nunca `//...`) — un vecino sin cuenta que da "La vi" aterriza de vuelta en el formulario tras registrarse
 
 ## 12. Archivos clave creados en Fase 0
 
@@ -273,3 +278,21 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - `app/reportes/page.tsx` (lista con badges de estado) / `nuevo/page.tsx` / `[id]/page.tsx` (detalle + mini-mapa readOnly + resolver)
 - `app/reportes/actions.ts` — `createReport` (zod + re-validación server-side del polígono) / `resolveReport`
 - `components/report-form.tsx` (conversión datetime-local → ISO/UTC en cliente) / `report-status-badge.tsx` (rojo urgencia SOLO en "Perdido") / `resolve-report-button.tsx`
+
+## 16. Archivos clave creados en Fase 4
+
+**Migración (aplicada contra Supabase el 2026-08-12):**
+- `supabase/migrations/0005_sightings_and_public_view.sql` — view `active_reports_public` (snap ~300 m), función `is_active_report` (security definer), RLS de `sightings` (insert solo sobre reportes activos; select para spotter y dueño del reporte), bucket `sighting-photos`
+
+**Lado público:**
+- `app/perdidos/page.tsx` — lista pública de reportes activos (mapa + cards, sin auth)
+- `app/perdidos/[id]/page.tsx` — detalle público con pin aproximado y CTA "La vi" (con `?next=` si no hay sesión)
+- `app/perdidos/[id]/avistamiento/page.tsx` + `components/sighting-form.tsx` — formulario del vecino (protegido)
+- `app/perdidos/actions.ts` — `createSighting` (zod + invariante BJ + foto a `sighting-photos`)
+- `components/reports-map.tsx` — mapa multi-marker con popups (solo display; nunca ve coordenadas exactas)
+
+**Integraciones a lo existente:**
+- `app/reportes/[id]/page.tsx` — sección "Avistamientos de vecinos" (lista + pins verdes vía prop `markers` de `LocationPicker`)
+- `components/login-form.tsx` / `signup-form.tsx` — extraídos como client components; páginas de auth ahora son Server Components que leen `?next=`
+- `lib/supabase/middleware.ts` — `/perdidos` público, `/perdidos/*/avistamiento` protegido, redirects con `next` validado
+- `app/layout.tsx` (link público "Perdidos") y `app/page.tsx` (CTA a `/perdidos`)

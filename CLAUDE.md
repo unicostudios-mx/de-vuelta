@@ -23,9 +23,12 @@ explícito). Producción: `de-vuelta.vercel.app`.
   (`LocationPicker` reutilizable), invariante BJ validado client- y
   server-side, RLS de `lost_reports` (migración 0004), verificada
   end-to-end incluyendo intentos de bypass.
-- **Siguiente**: Fase 4 (reportar avistamiento: lado público de los
-  reportes con ubicación aproximada + flujo de vecinos, reutilizando
-  `LocationPicker`).
+- **Fase 4**: ✅ completa. Lado público (`/perdidos`, view
+  `active_reports_public` con ubicación aproximada ~300 m) + flujo de
+  vecinos con cuenta (`?next=` en auth), RLS de `sightings`
+  (migración 0005), verificada end-to-end incluyendo negativos vía API.
+- **Siguiente**: Fase 5 (notificaciones geográficas con OneSignal —
+  requiere crear cuenta OneSignal y agregar env vars, ver `.env.example`).
 
 ## Comandos
 

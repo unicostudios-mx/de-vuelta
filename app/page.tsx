@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 text-center">
@@ -15,8 +18,12 @@ export default function Home() {
         colonia trabaja para traerla de vuelta.
       </p>
 
+      <Button asChild size="lg" className="mb-6">
+        <Link href="/perdidos">Ver mascotas perdidas en Benito Juárez</Link>
+      </Button>
+
       <p className="text-sm text-muted-foreground">
-        Próximamente — piloto en Alcaldía Benito Juárez, CDMX
+        Piloto en Alcaldía Benito Juárez, CDMX
       </p>
     </main>
   );

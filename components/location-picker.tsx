@@ -22,9 +22,12 @@ type Coords = { lat: number; lng: number };
 export function LocationPicker({
   initial,
   readOnly = false,
+  markers = [],
 }: {
   initial?: Coords;
   readOnly?: boolean;
+  /** Pins secundarios (teal), p. ej. avistamientos sobre el pin original. */
+  markers?: Coords[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
@@ -75,6 +78,12 @@ export function LocationPicker({
 
     if (initial) placeMarker(new mapboxgl.LngLat(initial.lng, initial.lat));
 
+    const extraMarkers = markers.map((m) =>
+      new mapboxgl.Marker({ color: "#0F766E" })
+        .setLngLat([m.lng, m.lat])
+        .addTo(map)
+    );
+
     if (!readOnly) {
       map.on("click", (e) => {
         const { lat, lng } = e.lngLat;
@@ -89,6 +98,7 @@ export function LocationPicker({
     }
 
     return () => {
+      extraMarkers.forEach((m) => m.remove());
       markerRef.current = null;
       map.remove();
     };

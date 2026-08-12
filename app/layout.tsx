@@ -49,6 +49,9 @@ export default async function RootLayout({
             De Vuelta
           </Link>
           <nav className="flex items-center gap-4 text-sm">
+            <Link href="/perdidos" className="text-foreground hover:text-primary">
+              Perdidos
+            </Link>
             {user ? (
               <>
                 <Link href="/mascotas" className="text-foreground hover:text-primary">

@@ -36,18 +36,29 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname === "/login" || pathname === "/signup";
+  // /perdidos es público; solo el formulario de avistamiento exige sesión.
   const isProtectedRoute =
-    pathname.startsWith("/mascotas") || pathname.startsWith("/reportes");
+    pathname.startsWith("/mascotas") ||
+    pathname.startsWith("/reportes") ||
+    (pathname.startsWith("/perdidos") && pathname.endsWith("/avistamiento"));
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthRoute) {
+    const next = request.nextUrl.searchParams.get("next");
     const url = request.nextUrl.clone();
-    url.pathname = "/mascotas";
+    url.search = "";
+    if (next?.startsWith("/") && !next.startsWith("//")) {
+      url.pathname = next;
+    } else {
+      url.pathname = "/mascotas";
+    }
     return NextResponse.redirect(url);
   }
 

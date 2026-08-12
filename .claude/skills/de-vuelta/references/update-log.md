@@ -83,3 +83,32 @@ se cierra, refleja eso también en `CONTEXT.md` (fuente de verdad oficial).
   reportes sin implementar (requiere job programado, fase futura).
 - Siguiente: Fase 4 (avistamientos + lado público con ubicación
   aproximada — el diseño de privacidad de coordenadas se hace ahí).
+
+## 2026-08-12 — Fase 4 completa
+
+- **Construido**: migración 0005 (view pública `active_reports_public`
+  con snap a ~300 m, función `is_active_report` security definer, RLS de
+  `sightings`, bucket `sighting-photos`), rutas públicas `/perdidos` +
+  detalle + formulario de avistamiento (protegido), sección
+  "Avistamientos de vecinos" en el detalle del dueño, flujo `?next=` en
+  auth (login/signup como Server Components + client forms), link
+  "Perdidos" en header y CTA en home.
+- **Verificado end-to-end contra Supabase real**: reporte de A visible
+  públicamente sin sesión con coordenada anclada a cuadrícula (19.3899 →
+  19.389; -99.1707 → -99.171); view expone SOLO columnas seguras;
+  `lost_reports` directo con anon = 0 filas; insert anónimo de sighting
+  = 401; vecino nuevo B: "La vi" → signup con next → aterriza en el form
+  → avistamiento con foto OK; dueño A ve el avistamiento (lista + pin);
+  reporte resuelto desaparece de /perdidos al instante (404) y un insert
+  autenticado vía REST sobre él da 403 (RLS/is_active_report).
+- **Patrón clave aprendido**: subqueries dentro de policies corren con el
+  RLS del usuario consultante — para validar contra tablas que el usuario
+  no puede leer, usar función `security definer` (documentado en
+  CONTEXT.md).
+- **Pendiente visual humano** (igual que Fase 3): el panel de navegador
+  de la sesión no compone el canvas de Mapbox — dar un vistazo a
+  `/perdidos` (mapa multi-pin con popups) y al detalle del dueño (pin
+  rojo + pins verdes) en `npm run dev`.
+- Siguiente: **Fase 5 (notificaciones geográficas)** — necesita cuenta
+  OneSignal y sus env vars (`NEXT_PUBLIC_ONESIGNAL_APP_ID`,
+  `ONESIGNAL_REST_API_KEY`); acción manual de Nicolás antes de arrancar.

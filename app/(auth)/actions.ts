@@ -6,6 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AuthActionState = { error: string | null; message?: string };
 
+// Solo paths internos ("/x..."): evita open-redirects vía ?next=https://...
+// ("//host" también es externo para los navegadores, por eso se excluye).
+function safeNext(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string") return null;
+  return value.startsWith("/") && !value.startsWith("//") ? value : null;
+}
+
 const signInSchema = z.object({
   email: z.string().trim().email("Correo inválido."),
   password: z.string().min(1, "Escribe tu contraseña."),
@@ -26,7 +33,7 @@ export async function signIn(
     return { error: "Correo o contraseña incorrectos." };
   }
 
-  redirect("/mascotas");
+  redirect(safeNext(formData.get("next")) ?? "/mascotas");
 }
 
 const signUpSchema = z.object({
@@ -62,7 +69,7 @@ export async function signUp(
   }
 
   if (data.session) {
-    redirect("/mascotas");
+    redirect(safeNext(formData.get("next")) ?? "/mascotas");
   }
 
   return {

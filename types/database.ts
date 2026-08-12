@@ -138,6 +138,13 @@ export type Database = {
             foreignKeyName: "animal_stories_report_id_fkey"
             columns: ["report_id"]
             isOneToOne: false
+            referencedRelation: "active_reports_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animal_stories_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
             referencedRelation: "lost_reports"
             referencedColumns: ["id"]
           },
@@ -243,6 +250,13 @@ export type Database = {
             columns: ["confirmed_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "active_reports_public"
             referencedColumns: ["id"]
           },
           {
@@ -447,6 +461,13 @@ export type Database = {
             foreignKeyName: "sightings_report_id_fkey"
             columns: ["report_id"]
             isOneToOne: false
+            referencedRelation: "active_reports_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sightings_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
             referencedRelation: "lost_reports"
             referencedColumns: ["id"]
           },
@@ -518,6 +539,23 @@ export type Database = {
       }
     }
     Views: {
+      active_reports_public: {
+        Row: {
+          approx_lat: number | null
+          approx_lng: number | null
+          breed: string | null
+          color: string | null
+          created_at: string | null
+          id: string | null
+          last_seen_at: string | null
+          notes: string | null
+          pet_name: string | null
+          photo_urls: string[] | null
+          reward_amount: number | null
+          species: string | null
+        }
+        Relationships: []
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -821,6 +859,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
+      is_active_report: { Args: { rid: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
