@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/logout-button";
+import { PushInit } from "@/components/push-init";
 
 export const metadata: Metadata = {
   title: "De Vuelta",
@@ -60,11 +61,7 @@ export default async function RootLayout({
                 <Link href="/reportes" className="text-foreground hover:text-primary">
                   Reportes
                 </Link>
-                <form action="/logout" method="post">
-                  <Button type="submit" variant="ghost" size="sm">
-                    Salir
-                  </Button>
-                </form>
+                <LogoutButton />
               </>
             ) : (
               <>
@@ -79,6 +76,7 @@ export default async function RootLayout({
           </nav>
         </header>
         {children}
+        {user && <PushInit userId={user.id} />}
       </body>
     </html>
   );

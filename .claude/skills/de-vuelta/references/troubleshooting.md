@@ -99,3 +99,35 @@ resultante (evita `cat .env.local` o similar; si necesitas confirmar que
 algo se cargó bien, verifica indirectamente — p. ej. corriendo la app y
 viendo si el error de "falta la variable" desaparece — en vez de imprimir
 el archivo).
+
+### Las variables "Sensitive" NO bajan con `vercel env pull`
+
+Por diseño, Vercel no permite volver a leer una variable Sensitive: `vercel
+env pull` la escribe **vacía** en `.env.local`. Afecta a
+`SUPABASE_SERVICE_ROLE_KEY` y `ONESIGNAL_REST_API_KEY`. Consecuencias:
+- Si algo local truena con "supabaseKey is required" o un 401 de OneSignal
+  y las variables "existen" en `.env.local`, revisa si están vacías
+  (`grep '^VAR=' .env.local | cut -d= -f2- | wc -c`) antes de sospechar de
+  la llave en sí.
+- Después de cada `vercel env pull`, hay que re-poner a mano los valores
+  Sensitive en `.env.local` (pedirlos al usuario o recuperarlos de su
+  fuente original). Los no-Sensitive sí bajan bien.
+
+## OneSignal
+
+### El "Key ID" de la tabla NO es la API key
+
+En Keys & IDs, la tabla de API Keys muestra un **Key ID** (identificador
+público corto, ej. 25 chars). La llave real (`os_v2_app_...`, ~113 chars)
+solo se muestra UNA vez al crearla o rotarla. Si solo tienes el Key ID:
+menú ⋮ de la fila → **Rotate** → copiar el token nuevo en ese momento
+(invalida el anterior).
+
+### Validar la REST API key: usa el endpoint correcto
+
+`GET /apps/{id}` devuelve 401 aunque la llave del app sea válida — ese
+endpoint pide la llave de ORGANIZACIÓN. Para validar la del app usa el
+endpoint de envío: `POST https://api.onesignal.com/notifications` con
+header `Authorization: Key <os_v2_...>`; un 200 con "All included players
+are not subscribed" significa que la llave funciona (solo no hay
+suscriptores todavía).

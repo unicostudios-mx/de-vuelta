@@ -40,6 +40,12 @@ export const publicEnv = {
       process.env.NEXT_PUBLIC_MAPBOX_TOKEN
     );
   },
+  get onesignalAppId() {
+    return required(
+      "NEXT_PUBLIC_ONESIGNAL_APP_ID",
+      process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID
+    );
+  },
 };
 
 // Solo servidor — lanzan si se evalúan en el browser.
@@ -48,6 +54,12 @@ export const serverEnv = {
     return serverOnly(
       "SUPABASE_SERVICE_ROLE_KEY",
       process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+  },
+  get onesignalRestApiKey() {
+    return serverOnly(
+      "ONESIGNAL_REST_API_KEY",
+      process.env.ONESIGNAL_REST_API_KEY
     );
   },
 };

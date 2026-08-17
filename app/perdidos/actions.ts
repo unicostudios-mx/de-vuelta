@@ -3,8 +3,9 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isInBenitoJuarez } from "@/lib/geo/validate-bj";
+import { notifySightingToOwner } from "@/lib/notifications";
 
 export type SightingActionState = { error: string | null };
 
@@ -71,6 +72,27 @@ export async function createSighting(
     return {
       error: "No se pudo enviar el aviso. Puede que el reporte ya esté resuelto.",
     };
+  }
+
+  // Aviso dirigido al dueño. El vecino no puede leer lost_reports (RLS),
+  // así que el reporter_id se obtiene server-side con el admin client —
+  // el dato nunca llega al cliente. Nunca bloquea el flujo.
+  try {
+    const admin = createAdminClient();
+    const { data: report } = await admin
+      .from("lost_reports")
+      .select("reporter_id, pets(name)")
+      .eq("id", reportId)
+      .single();
+    if (report?.reporter_id) {
+      await notifySightingToOwner({
+        ownerId: report.reporter_id,
+        reportId,
+        petName: report.pets?.name ?? "tu mascota",
+      });
+    }
+  } catch (err) {
+    console.error("[push] no se pudo notificar al dueño", err);
   }
 
   revalidatePath(`/perdidos/${reportId}`);

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isInBenitoJuarez } from "@/lib/geo/validate-bj";
+import { notifyNewReport } from "@/lib/notifications";
 
 export type ReportActionState = { error: string | null };
 
@@ -47,20 +48,35 @@ export async function createReport(
     return { error: "La ubicación debe estar dentro de Benito Juárez." };
   }
 
-  const { error } = await supabase.from("lost_reports").insert({
-    pet_id: parsed.data.petId,
-    reporter_id: user.id,
-    last_seen_lat: parsed.data.lat,
-    last_seen_lng: parsed.data.lng,
-    last_seen_at: parsed.data.lastSeenAt.toISOString(),
-    notes: parsed.data.notes || null,
-    reward_amount: parsed.data.reward ?? null,
-  });
+  const { data: created, error } = await supabase
+    .from("lost_reports")
+    .insert({
+      pet_id: parsed.data.petId,
+      reporter_id: user.id,
+      last_seen_lat: parsed.data.lat,
+      last_seen_lng: parsed.data.lng,
+      last_seen_at: parsed.data.lastSeenAt.toISOString(),
+      notes: parsed.data.notes || null,
+      reward_amount: parsed.data.reward ?? null,
+    })
+    .select("id, pets(name, species, color)")
+    .single();
 
   // RLS rechaza el insert si la mascota no es del usuario.
-  if (error) return { error: "No se pudo crear el reporte. Intenta de nuevo." };
+  if (error || !created) {
+    return { error: "No se pudo crear el reporte. Intenta de nuevo." };
+  }
+
+  // Amplificación: broadcast a los vecinos suscritos. Nunca bloquea el flujo.
+  await notifyNewReport({
+    reportId: created.id,
+    petName: created.pets?.name ?? "Una mascota",
+    species: created.pets?.species,
+    color: created.pets?.color,
+  });
 
   revalidatePath("/reportes");
+  revalidatePath("/perdidos");
   redirect("/reportes");
 }
 
