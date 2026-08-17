@@ -104,7 +104,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 | 2 | Perfil de mascota | ✅ Completa — auth + CRUD + RLS real, verificada end-to-end |
 | 3 | Reportar pérdida | ✅ Completa — mapa Mapbox + invariante BJ + RLS, verificada end-to-end |
 | 4 | Reportar avistamiento | ✅ Completa — lado público con ubicación aproximada + flujo de vecinos, verificada end-to-end |
-| 5 | Notificaciones geográficas | Pendiente |
+| 5 | Notificaciones geográficas | ✅ Completa — push OneSignal (broadcast BJ + dirigido al dueño); pendiente única prueba humana del push real |
 | 6 | Matching (manual + IA) | Pendiente |
 | 7 | Capa comunitaria + adopción curada | Pendiente |
 | 8 | Sostenibilidad (pagos y patrocinios) | Pendiente |
@@ -209,6 +209,12 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-08-12: `active_reports_public` (migración 0005) es LA única superficie pública de datos: view con permisos de owner que atraviesa el RLS deny-all exponiendo solo columnas seguras de reportes activos; grant a `anon`+`authenticated`
 - 2026-08-12: Patrón para policies que referencian tablas ajenas: las subqueries de una policy corren con el RLS del usuario consultante → función `security definer` (`is_active_report`) para que el vecino pueda validar "reporte existe y está activo" sin poder leer `lost_reports`
 - 2026-08-12: Flujo `?next=` en auth (middleware + hidden input en login/signup, validado contra open-redirect: solo paths `/...` y nunca `//...`) — un vecino sin cuenta que da "La vi" aterriza de vuelta en el formulario tras registrarse
+- 2026-08-16: Fase 5 — push OneSignal: broadcast a todo BJ suscrito al crear reporte (a escala del piloto, la alcaldía completa ES el radio útil; el radio real llega con masa de usuarios) + push dirigido al dueño al llegar avistamiento (`external_id` = id de Supabase, fijado con `OneSignal.login`)
+- 2026-08-16: SW de OneSignal en scope propio `/push/onesignal/` para convivir con el de Serwist (scope `/`); SDK inicializado solo con sesión, detrás de una promesa global (el doble-mount de React en dev corría `login()` antes de terminar el `init`)
+- 2026-08-16: Todos los envíos push son fire-and-forget (try/catch + log): la notificación jamás bloquea la creación de reportes/avistamientos
+- 2026-08-16: Primera vez que se usa `createAdminClient()`: leer `reporter_id` server-side para el push dirigido (el vecino no puede leer `lost_reports` por RLS y el dato nunca llega al cliente)
+- 2026-08-16: Sin filas en la tabla `notifications` todavía (historial in-app diferido a la capa comunitaria); tabla queda deny-all
+- 2026-08-16: Gotcha Vercel: las env vars "Sensitive" NO bajan con `vercel env pull` (llegan vacías a `.env.local` por diseño) — afecta `SUPABASE_SERVICE_ROLE_KEY` y `ONESIGNAL_REST_API_KEY` en desarrollo local; en prod se inyectan bien en runtime
 
 ## 12. Archivos clave creados en Fase 0
 
@@ -296,3 +302,12 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - `components/login-form.tsx` / `signup-form.tsx` — extraídos como client components; páginas de auth ahora son Server Components que leen `?next=`
 - `lib/supabase/middleware.ts` — `/perdidos` público, `/perdidos/*/avistamiento` protegido, redirects con `next` validado
 - `app/layout.tsx` (link público "Perdidos") y `app/page.tsx` (CTA a `/perdidos`)
+
+## 17. Archivos clave creados en Fase 5
+
+- `lib/notifications.ts` — `notifyNewReport` (broadcast, segmento Total Subscriptions) y `notifySightingToOwner` (por `external_id`); fire-and-forget vía REST de OneSignal
+- `components/push-init.tsx` — init del SDK v16 (`react-onesignal`), SW en scope `/push/onesignal/`, Slidedown + `OneSignal.login(userId)`; montado en layout solo con sesión
+- `components/logout-button.tsx` — logout client-side con `OneSignal.logout()` best-effort antes del POST a `/logout`
+- `public/push/onesignal/OneSignalSDKWorker.js` — SW de OneSignal (importScripts del CDN), aislado del SW de Serwist
+- `lib/env.ts` — `publicEnv.onesignalAppId` + `serverEnv.onesignalRestApiKey`
+- Config manual hecha en OneSignal: plataforma Web (site `De Vuelta`, URL `de-vuelta.vercel.app`), API key "De Vuelta" (rotada 2026-08-16); Vercel: `NEXT_PUBLIC_ONESIGNAL_APP_ID` (no Sensitive) + `ONESIGNAL_REST_API_KEY` (Sensitive)

@@ -112,3 +112,32 @@ se cierra, refleja eso también en `CONTEXT.md` (fuente de verdad oficial).
 - Siguiente: **Fase 5 (notificaciones geográficas)** — necesita cuenta
   OneSignal y sus env vars (`NEXT_PUBLIC_ONESIGNAL_APP_ID`,
   `ONESIGNAL_REST_API_KEY`); acción manual de Nicolás antes de arrancar.
+
+## 2026-08-16 — Fase 5 completa (push OneSignal)
+
+- **Credenciales**: Nicolás pegó al inicio el "Key ID" de OneSignal
+  creyendo que era la API key (ver troubleshooting.md); se resolvió
+  rotando la llave "De Vuelta" desde su Chrome y pegándola directo a
+  Vercel vía portapapeles. Validada con 200 contra `POST /notifications`.
+  También se configuró la plataforma **Web** en el dashboard de OneSignal
+  (venía sin configurar → error "App not configured for web push"): site
+  De Vuelta / `https://de-vuelta.vercel.app`.
+- **Construido**: `lib/notifications.ts` (broadcast + dirigido),
+  `push-init.tsx` (SDK solo con sesión, SW en scope `/push/onesignal/`,
+  `login(userId)` para external_id), `logout-button.tsx`
+  (`OneSignal.logout()` best-effort), integración en `createReport` y
+  `createSighting` (este último con `createAdminClient` para leer
+  `reporter_id` — primera vez que se usa el admin client).
+- **Bug encontrado en pruebas**: el doble-mount de React en dev hacía
+  correr `OneSignal.login()` antes de que terminara el `init` → se guarda
+  la promesa del init en un global y se espera.
+- **Verificado**: broadcast dispara con 200 desde `createReport` (cero
+  suscriptores aún, esperado). El dirigido al dueño no es verificable en
+  local (SUPABASE_SERVICE_ROLE_KEY vacía en `.env.local` — gotcha de
+  Sensitive vars, documentado); se verifica en producción.
+- **Prueba humana pendiente (Nicolás, ~3 min)**: en su Chrome, entrar a
+  producción con una cuenta, aceptar el prompt de notificaciones, crear
+  un reporte desde otra cuenta y confirmar que llega el push con
+  deep-link. Ídem avistamiento → push al dueño.
+- Siguiente: **Fase 6 (matching manual + IA)** — necesita
+  `ANTHROPIC_API_KEY`.

@@ -27,8 +27,12 @@ explícito). Producción: `de-vuelta.vercel.app`.
   `active_reports_public` con ubicación aproximada ~300 m) + flujo de
   vecinos con cuenta (`?next=` en auth), RLS de `sightings`
   (migración 0005), verificada end-to-end incluyendo negativos vía API.
-- **Siguiente**: Fase 5 (notificaciones geográficas con OneSignal —
-  requiere crear cuenta OneSignal y agregar env vars, ver `.env.example`).
+- **Fase 5**: ✅ completa. Push OneSignal: broadcast BJ al crear reporte +
+  dirigido al dueño al llegar avistamiento (`lib/notifications.ts`,
+  `components/push-init.tsx`); SW en scope `/push/onesignal/` separado
+  del de Serwist. Pendiente: prueba humana del push real en producción.
+- **Siguiente**: Fase 6 (matching manual + IA con Claude API — requiere
+  `ANTHROPIC_API_KEY`, ver `.env.example`).
 
 ## Comandos
 
