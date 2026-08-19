@@ -145,18 +145,21 @@ resuelven**. OneSignal crea el registro de suscripción pero sin token, y
 por eso todo envío responde `invalid_player_ids` / "All included players
 are not subscribed".
 
-Hipótesis viva: el handshake por `postMessage` entre el SDK y su service
-worker se rompe porque el worker registrado
-(`public/OneSignalSDKWorker.js`) también importa el worker de Serwist, y
-los listeners de Serwist interfieren.
+**DESCARTADO (probado el 2026-08-18): NO es un conflicto con Serwist.** Se
+desactivó Serwist por completo y se dejó a OneSignal como único service
+worker registrado (1 registro, SDK cargado, permiso `granted`) — y la
+suscripción siguió sin crearse. Se revirtió el cambio para no perder el
+offline de la PWA a cambio de nada. No repetir este experimento.
 
-Dos caminos para cerrarlo (decisión de producto pendiente con Nicolás):
-1. **Sacrificar el offline de la PWA**: dejar que OneSignal registre su
-   worker solo (quitar Serwist o su registro). Push funciona seguro;
-   se pierde el caché offline de Fase 1.
-2. **Mantener ambos** e investigar el handshake — probablemente requiera
-   invertir el orden de imports, o usar el `OneSignalSDKUpdaterWorker`,
-   o abrir ticket con OneSignal.
+Hipótesis viva ahora: el permiso de notificaciones se concedió mientras el
+worker daba 404, así que el navegador tiene `permission=granted` sin que
+exista una suscripción real; el SDK vería "ya está concedido" y se saltaría
+el flujo de alta. **Siguiente paso barato**: resetear el permiso del sitio
+a "Preguntar" (candado de la barra de direcciones → Notificaciones →
+Restablecer) y recargar para que el SDK haga el alta desde cero.
+
+Si eso no resuelve: abrir ticket con OneSignal con esta evidencia (el
+`subscribe()` manual funciona, el suyo no).
 
 ### Validar la REST API key: usa el endpoint correcto
 
