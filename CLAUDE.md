@@ -27,13 +27,13 @@ explícito). Producción: `de-vuelta.vercel.app`.
   `active_reports_public` con ubicación aproximada ~300 m) + flujo de
   vecinos con cuenta (`?next=` en auth), RLS de `sightings`
   (migración 0005), verificada end-to-end incluyendo negativos vía API.
-- **Fase 5**: ⚠️ incompleta. El código de envío funciona (broadcast BJ y
-  dirigido al dueño; `lib/notifications.ts` responde 200 en producción),
-  pero **el SDK no logra suscribir navegadores**: la suscripción queda sin
-  token push y todo envío responde `invalid_player_ids`. Causa probable:
-  conflicto entre el service worker de Serwist y el de OneSignal. Ver
-  `.claude/skills/de-vuelta/references/troubleshooting.md` → sección
-  "ABIERTO", que trae todo lo ya descartado y las dos salidas posibles.
+- **Fase 5**: 🟡 casi lista. Envíos funcionando (broadcast BJ + dirigido al
+  dueño, 200 en producción) y la configuración del service worker ya logró
+  suscribir un dispositivo con token real. Falta un paso manual: aceptar el
+  permiso en el prompt nativo de Chrome y ver llegar una notificación. Ver
+  `.claude/skills/de-vuelta/references/troubleshooting.md` → "Push: la
+  configuración correcta (y cómo NO romperla)" — importante leerlo antes de
+  tocar workers o llamar `optOut()`.
 - **Siguiente**: Fase 6 (matching manual + IA con Claude API — requiere
   `ANTHROPIC_API_KEY`, ver `.env.example`).
 

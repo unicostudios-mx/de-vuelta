@@ -168,7 +168,28 @@ logra suscribirse, así que las notificaciones no se entregan.
   que OneSignal registre su worker solo, o seguir investigando el
   conflicto con Serwist.
 
-### Cierre de la sesión (mismo día)
+### CORRECCIÓN al cierre — la configuración sí funcionaba
+
+Revisando **Audience → Subscriptions** en el dashboard apareció un registro
+`Subscribed` con token real a las 19:00 del 2026-08-18 (todos los demás
+dicen `No Push Token`). O sea: el push **sí quedó funcionando** con la
+configuración del worker combinado. Lo que lo rompió después fueron las
+"limpiezas" de depuración (`optOut`, `unsubscribe`, borrar IndexedDB), que
+dejaron el dispositivo como `Subscriber Opted Out` — y todo lo medido
+después reflejaba ese daño autoinfligido, no el bug.
+
+Se restauró esa configuración (commit `cc49559`): worker único
+`OneSignalSDKWorker.js` (CDN de OneSignal + `/sw.js`), Serwist con
+`register:false`. **Conserva push Y offline** — no hacía falta sacrificar
+ninguno de los dos, así que la disyuntiva que se le planteó a Nicolás
+estaba mal fundada.
+
+Único pendiente: aceptar el permiso en el prompt nativo de Chrome (no
+automatizable) y ver llegar la notificación. Detalle en
+troubleshooting.md → "Push: la configuración correcta (y cómo NO
+romperla)".
+
+### Historial de la depuración (contexto, ya superado)
 
 - Nicolás eligió sacrificar el offline. **Se ejecutó y NO funcionó**: con
   Serwist desactivado y OneSignal como único worker, la suscripción siguió

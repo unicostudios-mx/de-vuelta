@@ -123,57 +123,45 @@ solo se muestra UNA vez al crearla o rotarla. Si solo tienes el Key ID:
 menú ⋮ de la fila → **Rotate** → copiar el token nuevo en ese momento
 (invalida el anterior).
 
-### ⚠️ ABIERTO: el SDK no crea la suscripción push (Serwist vs OneSignal)
+### Push: la configuración correcta (y cómo NO romperla)
 
-Estado al 2026-08-18. El envío funciona, pero **ningún navegador queda
-suscrito**, así que las notificaciones no llegan a nadie.
+Estado al 2026-08-18. La configuración actual **sí logró suscribir** un
+dispositivo con token real (registro `Subscribed` en el dashboard, 19:00 h).
+Lo que quedó pendiente es solo re-conceder el permiso en el Chrome de
+Nicolás y ver llegar una notificación.
 
-Lo que YA está verificado como correcto (no volver a investigarlo):
-- REST API key y App ID válidos (`POST /notifications` responde 200).
-- El código de la app dispara los envíos bien (200 en logs de producción
-  al crear reporte y avistamiento).
-- El service worker se registra, queda `activated` y **sí puede** crear
-  suscripciones push: `reg.pushManager.subscribe()` manual con la VAPID
-  key del app devuelve un endpoint válido.
-- Permiso de notificaciones concedido; `external_id` se liga bien
-  (`GET /apps/{id}/subscriptions/{subId}/user/identity` devuelve el uuid
-  de Supabase).
+**La configuración que funciona** (no cambiarla a ciegas):
+- `public/OneSignalSDKWorker.js` — en la raíz, con el nombre exacto que
+  OneSignal exige. Carga **primero** el bundle del CDN de OneSignal y
+  **después** `/sw.js` (Serwist). Un solo worker en scope `/` hace push y
+  offline.
+- `next.config.ts` — Serwist con `register: false`; quien registra el
+  worker es `components/sw-register.tsx`.
+- `components/push-init.tsx` — el `init` NO pasa `serviceWorkerPath` ni
+  `serviceWorkerParam`: el SDK los ignora y sigue siempre la config del
+  dashboard (verificable en `https://api.onesignal.com/sync/{appId}/web`,
+  que reporta `customizationEnabled:false` y `OneSignalSDKWorker.js`).
 
-El síntoma exacto: `OneSignal.User.PushSubscription.token` siempre es
-`null` y `optIn()` / `requestPermission()` devuelven promesas que **nunca
-resuelven**. OneSignal crea el registro de suscripción pero sin token, y
-por eso todo envío responde `invalid_player_ids` / "All included players
-are not subscribed".
+**El error que costó horas — no repetirlo**: al depurar, se llamó
+`optOut()` / `pushManager.unsubscribe()` / borrado de IndexedDB para
+"empezar de cero". Eso **destruye la suscripción buena** y deja el
+dispositivo como `Subscriber Opted Out`; todas las mediciones posteriores
+reflejan ese daño, no el problema original. Antes de concluir que algo
+falla, mirar **Audience → Subscriptions** en el dashboard: distingue
+`Subscribed` de `No Push Token` y de `Subscriber Opted Out`, y trae la
+hora exacta de cada cambio.
 
-**DESCARTADO (probado el 2026-08-18): NO es un conflicto con Serwist.** Se
-desactivó Serwist por completo y se dejó a OneSignal como único service
-worker registrado (1 registro, SDK cargado, permiso `granted`) — y la
-suscripción siguió sin crearse. Se revirtió el cambio para no perder el
-offline de la PWA a cambio de nada. No repetir este experimento.
+**Límite conocido**: el prompt nativo de permisos de Chrome no se puede
+clickear por automatización (vive fuera del DOM). Si el permiso quedó en
+`default`, alguien tiene que aceptarlo a mano — ojo con el ícono de
+campana 🔕 que Chrome usa para silenciarlo.
 
-Hipótesis viva ahora: el permiso se concedió mientras el worker daba 404,
-así que el navegador quedó en `granted` sin suscripción real y el SDK se
-saltaría el alta. **Se preparó el escenario limpio** (permiso reseteado a
-`default`, IndexedDB/localStorage borrados, worker re-registrado, sesión
-iniciada) pero **quedó sin ejecutar el paso final**: conceder el permiso
-en el prompt nativo de Chrome.
+Ya verificado y sin necesidad de re-investigar: API key y App ID válidos,
+los envíos salen con 200 desde producción al crear reporte y avistamiento,
+el worker queda `activated`, y `external_id` se liga bien al uuid de
+Supabase.
 
-### Cómo retomar (5 minutos, requiere una persona)
 
-El prompt nativo de Chrome no se puede clickear por automatización — vive
-fuera del DOM. Para cerrar la prueba:
-
-1. Entrar a `de-vuelta.vercel.app` con una cuenta y esperar el Slidedown;
-   si no sale: consola → `OneSignal.Slidedown.promptPush({force:true})`.
-2. Aceptar el prompt de Chrome (**Permitir**). Ojo: Chrome suele silenciarlo
-   en un ícono de campana 🔕 al final de la barra de direcciones.
-3. Verificar en consola:
-   `OneSignal.User.PushSubscription.token` — si es `null`, la hipótesis del
-   permiso se descarta y toca abrir ticket con OneSignal.
-4. Si hay token, probar el envío real creando un reporte desde otra cuenta.
-
-Nota: si se vuelve a limpiar `localStorage` en caliente, se pierde la
-sesión de Supabase y hay que volver a iniciarla.
 
 ### Validar la REST API key: usa el endpoint correcto
 
