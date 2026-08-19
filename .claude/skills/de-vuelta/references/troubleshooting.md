@@ -123,6 +123,41 @@ solo se muestra UNA vez al crearla o rotarla. Si solo tienes el Key ID:
 menú ⋮ de la fila → **Rotate** → copiar el token nuevo en ese momento
 (invalida el anterior).
 
+### ⚠️ ABIERTO: el SDK no crea la suscripción push (Serwist vs OneSignal)
+
+Estado al 2026-08-18. El envío funciona, pero **ningún navegador queda
+suscrito**, así que las notificaciones no llegan a nadie.
+
+Lo que YA está verificado como correcto (no volver a investigarlo):
+- REST API key y App ID válidos (`POST /notifications` responde 200).
+- El código de la app dispara los envíos bien (200 en logs de producción
+  al crear reporte y avistamiento).
+- El service worker se registra, queda `activated` y **sí puede** crear
+  suscripciones push: `reg.pushManager.subscribe()` manual con la VAPID
+  key del app devuelve un endpoint válido.
+- Permiso de notificaciones concedido; `external_id` se liga bien
+  (`GET /apps/{id}/subscriptions/{subId}/user/identity` devuelve el uuid
+  de Supabase).
+
+El síntoma exacto: `OneSignal.User.PushSubscription.token` siempre es
+`null` y `optIn()` / `requestPermission()` devuelven promesas que **nunca
+resuelven**. OneSignal crea el registro de suscripción pero sin token, y
+por eso todo envío responde `invalid_player_ids` / "All included players
+are not subscribed".
+
+Hipótesis viva: el handshake por `postMessage` entre el SDK y su service
+worker se rompe porque el worker registrado
+(`public/OneSignalSDKWorker.js`) también importa el worker de Serwist, y
+los listeners de Serwist interfieren.
+
+Dos caminos para cerrarlo (decisión de producto pendiente con Nicolás):
+1. **Sacrificar el offline de la PWA**: dejar que OneSignal registre su
+   worker solo (quitar Serwist o su registro). Push funciona seguro;
+   se pierde el caché offline de Fase 1.
+2. **Mantener ambos** e investigar el handshake — probablemente requiera
+   invertir el orden de imports, o usar el `OneSignalSDKUpdaterWorker`,
+   o abrir ticket con OneSignal.
+
 ### Validar la REST API key: usa el endpoint correcto
 
 `GET /apps/{id}` devuelve 401 aunque la llave del app sea válida — ese

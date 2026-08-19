@@ -141,3 +141,29 @@ se cierra, refleja eso también en `CONTEXT.md` (fuente de verdad oficial).
   deep-link. Ídem avistamiento → push al dueño.
 - Siguiente: **Fase 6 (matching manual + IA)** — necesita
   `ANTHROPIC_API_KEY`.
+
+## 2026-08-18 — Fase 5 queda ABIERTA (push no llega a nadie)
+
+Se intentó cerrar la prueba real de punta a punta en el Chrome de
+Nicolás. Se avanzó bastante pero **quedó sin resolver**: ningún navegador
+logra suscribirse, así que las notificaciones no se entregan.
+
+- **Bug real encontrado y corregido en el camino**: el SDK ignora
+  `serviceWorkerPath`/`serviceWorkerParam` del `init` y siempre sigue la
+  config del dashboard (`customizationEnabled:false`,
+  `/OneSignalSDKWorker.js`, scope `/`) — verificable en
+  `https://api.onesignal.com/sync/{appId}/web`. Por eso el worker daba
+  404 y nunca hubo token. Se agregó `public/OneSignalSDKWorker.js` y se
+  desactivó el auto-registro de Serwist (`register:false` +
+  `components/sw-register.tsx`).
+- **Config manual hecha en OneSignal**: plataforma Web configurada (site
+  De Vuelta, `https://de-vuelta.vercel.app`). OJO: el toggle "Customize
+  service worker paths" NO persiste al guardar — se revierte solo.
+- **Lo que sigue roto**: `PushSubscription.token` siempre null;
+  `optIn()`/`requestPermission()` devuelven promesas que nunca resuelven.
+  Ver troubleshooting.md → sección "ABIERTO" para todo lo ya descartado
+  (API key, envíos, permiso, worker activo, subscribe manual funcionando)
+  y las dos salidas posibles.
+- **Decisión pendiente de Nicolás**: sacrificar el offline de la PWA para
+  que OneSignal registre su worker solo, o seguir investigando el
+  conflicto con Serwist.
