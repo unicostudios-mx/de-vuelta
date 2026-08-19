@@ -1,12 +1,17 @@
-// Worker único de la app, en la ruta exacta que exige la config de
-// OneSignal (su dashboard manda sobre los parámetros del init).
+// Único service worker de la app.
 //
-// El import del CDN de OneSignal va explícito y primero: el SDK verifica
-// que el archivo del worker registrado contenga su propio importScripts
-// para aceptarlo como suyo; si solo cargábamos /sw.js de forma indirecta,
-// registraba el worker pero nunca creaba la suscripción push.
+// Fase 5: OneSignal maneja el service worker por completo. Convivir con el
+// worker de Serwist (offline de la PWA) rompía la suscripción push — el SDK
+// registraba el worker pero nunca le adjuntaba el token, así que ningún
+// navegador quedaba suscrito. Se priorizó el push: es el mecanismo que
+// resuelve el problema central del producto (que los vecinos se enteren a
+// tiempo), mientras que el caché offline aporta poco en una app de datos
+// vivos y hasta puede mostrar reportes ya resueltos.
 //
-// Después carga el worker de Serwist, que da el offline de la PWA. Así un
-// solo service worker controla el scope "/" y hace ambas cosas.
+// Para reactivar el offline: volver a poner `disable` en next.config.ts y
+// resolver el conflicto de workers (ver troubleshooting.md).
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
-importScripts("/sw.js");
+
+// Handler mínimo de fetch: Chrome lo pide para considerar la PWA
+// instalable. Deja pasar todo a la red sin cachear nada.
+self.addEventListener("fetch", () => {});
