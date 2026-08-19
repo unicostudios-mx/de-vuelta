@@ -167,3 +167,17 @@ logra suscribirse, así que las notificaciones no se entregan.
 - **Decisión pendiente de Nicolás**: sacrificar el offline de la PWA para
   que OneSignal registre su worker solo, o seguir investigando el
   conflicto con Serwist.
+
+### Cierre de la sesión (mismo día)
+
+- Nicolás eligió sacrificar el offline. **Se ejecutó y NO funcionó**: con
+  Serwist desactivado y OneSignal como único worker, la suscripción siguió
+  sin crearse. Queda descartado que Serwist fuera la causa. **Se revirtió**
+  para no perder el offline a cambio de nada (commit `d006a8a`).
+- Nueva hipótesis y escenario ya preparado: el permiso se había concedido
+  mientras el worker daba 404. Nicolás reseteó el permiso del sitio; se
+  limpió el estado del SDK y se volvió a iniciar sesión. **Faltó solo
+  aceptar el prompt nativo de Chrome** — no es automatizable. Ver
+  troubleshooting.md → "Cómo retomar".
+- Estado del código: todo commiteado y en producción. El envío funciona;
+  falta que un navegador quede suscrito.

@@ -151,15 +151,29 @@ worker registrado (1 registro, SDK cargado, permiso `granted`) — y la
 suscripción siguió sin crearse. Se revirtió el cambio para no perder el
 offline de la PWA a cambio de nada. No repetir este experimento.
 
-Hipótesis viva ahora: el permiso de notificaciones se concedió mientras el
-worker daba 404, así que el navegador tiene `permission=granted` sin que
-exista una suscripción real; el SDK vería "ya está concedido" y se saltaría
-el flujo de alta. **Siguiente paso barato**: resetear el permiso del sitio
-a "Preguntar" (candado de la barra de direcciones → Notificaciones →
-Restablecer) y recargar para que el SDK haga el alta desde cero.
+Hipótesis viva ahora: el permiso se concedió mientras el worker daba 404,
+así que el navegador quedó en `granted` sin suscripción real y el SDK se
+saltaría el alta. **Se preparó el escenario limpio** (permiso reseteado a
+`default`, IndexedDB/localStorage borrados, worker re-registrado, sesión
+iniciada) pero **quedó sin ejecutar el paso final**: conceder el permiso
+en el prompt nativo de Chrome.
 
-Si eso no resuelve: abrir ticket con OneSignal con esta evidencia (el
-`subscribe()` manual funciona, el suyo no).
+### Cómo retomar (5 minutos, requiere una persona)
+
+El prompt nativo de Chrome no se puede clickear por automatización — vive
+fuera del DOM. Para cerrar la prueba:
+
+1. Entrar a `de-vuelta.vercel.app` con una cuenta y esperar el Slidedown;
+   si no sale: consola → `OneSignal.Slidedown.promptPush({force:true})`.
+2. Aceptar el prompt de Chrome (**Permitir**). Ojo: Chrome suele silenciarlo
+   en un ícono de campana 🔕 al final de la barra de direcciones.
+3. Verificar en consola:
+   `OneSignal.User.PushSubscription.token` — si es `null`, la hipótesis del
+   permiso se descarta y toca abrir ticket con OneSignal.
+4. Si hay token, probar el envío real creando un reporte desde otra cuenta.
+
+Nota: si se vuelve a limpiar `localStorage` en caliente, se pierde la
+sesión de Supabase y hay que volver a iniciarla.
 
 ### Validar la REST API key: usa el endpoint correcto
 
