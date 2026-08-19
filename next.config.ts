@@ -6,6 +6,10 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
   // El service worker solo se genera en producción; en dev estorba con HMR.
   disable: process.env.NODE_ENV === "development",
+  // No auto-registrar /sw.js: quien se registra es /OneSignalSDKWorker.js
+  // (que importa a /sw.js), porque OneSignal exige ese nombre en el root y
+  // dos workers no pueden compartir el scope "/". Ver components/sw-register.tsx.
+  register: false,
 });
 
 const nextConfig: NextConfig = {

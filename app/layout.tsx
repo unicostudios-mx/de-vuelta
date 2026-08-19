@@ -4,6 +4,7 @@ import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import { PushInit } from "@/components/push-init";
+import { SwRegister } from "@/components/sw-register";
 
 export const metadata: Metadata = {
   title: "De Vuelta",
@@ -76,6 +77,7 @@ export default async function RootLayout({
           </nav>
         </header>
         {children}
+        <SwRegister />
         {user && <PushInit userId={user.id} />}
       </body>
     </html>

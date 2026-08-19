@@ -23,12 +23,12 @@ export function PushInit({ userId }: { userId: string }) {
   useEffect(() => {
     const run = async () => {
       try {
+        // Sin serviceWorkerPath/Param: el SDK ignora esos parámetros y usa
+        // siempre la config del dashboard (/OneSignalSDKWorker.js en el
+        // root, scope "/"). Ese archivo existe en public/ y carga el worker
+        // de Serwist — ver components/sw-register.tsx.
         window.__onesignalInit ??= OneSignal.init({
           appId: publicEnv.onesignalAppId,
-          // Apunta al service worker de Serwist, que importa el SDK de
-          // OneSignal (ver app/sw.ts) — un solo worker en el scope raíz.
-          serviceWorkerParam: { scope: "/" },
-          serviceWorkerPath: "sw.js",
           allowLocalhostAsSecureOrigin: true,
         });
         await window.__onesignalInit;
