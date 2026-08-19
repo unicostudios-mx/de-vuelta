@@ -13,11 +13,11 @@ declare global {
 }
 
 /**
- * Inicializa OneSignal para usuarios con sesión: registra el service
- * worker en su propio scope (/push/onesignal/, para no pisar el de
- * Serwist en /), muestra el soft-prompt Slidedown y liga la suscripción
- * al id de Supabase vía external_id — eso habilita el push dirigido
- * (aviso al dueño) y el targeting futuro de Fase 6.
+ * Inicializa OneSignal para usuarios con sesión: reutiliza el service
+ * worker de Serwist (que importa el SDK de OneSignal), muestra el
+ * soft-prompt Slidedown y liga la suscripción al id de Supabase vía
+ * external_id — eso habilita el push dirigido (aviso al dueño) y el
+ * targeting futuro de Fase 6.
  */
 export function PushInit({ userId }: { userId: string }) {
   useEffect(() => {
@@ -25,8 +25,10 @@ export function PushInit({ userId }: { userId: string }) {
       try {
         window.__onesignalInit ??= OneSignal.init({
           appId: publicEnv.onesignalAppId,
-          serviceWorkerParam: { scope: "/push/onesignal/" },
-          serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+          // Apunta al service worker de Serwist, que importa el SDK de
+          // OneSignal (ver app/sw.ts) — un solo worker en el scope raíz.
+          serviceWorkerParam: { scope: "/" },
+          serviceWorkerPath: "sw.js",
           allowLocalhostAsSecureOrigin: true,
         });
         await window.__onesignalInit;
