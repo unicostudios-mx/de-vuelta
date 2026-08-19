@@ -45,6 +45,17 @@ async function sendPush(payload: PushPayload): Promise<void> {
   }
 }
 
+// La DB guarda la especie en inglés; el push va a usuarios finales.
+const SPECIES_ES: Record<string, string> = {
+  dog: "perro",
+  cat: "gato",
+  rabbit: "conejo",
+  bird: "ave",
+  reptile: "reptil",
+  rodent: "roedor",
+  other: "mascota",
+};
+
 /** Broadcast a todo BJ suscrito cuando se publica un reporte nuevo. */
 export async function notifyNewReport(args: {
   reportId: string;
@@ -52,7 +63,8 @@ export async function notifyNewReport(args: {
   species?: string | null;
   color?: string | null;
 }): Promise<void> {
-  const señas = [args.species, args.color].filter(Boolean).join(", ");
+  const especie = args.species ? SPECIES_ES[args.species] ?? args.species : null;
+  const señas = [especie, args.color].filter(Boolean).join(", ");
   await sendPush({
     headings: "🔴 Mascota perdida cerca de ti",
     contents: `${args.petName}${señas ? ` (${señas})` : ""} se perdió en Benito Juárez. Si la ves, avisa.`,
