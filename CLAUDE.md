@@ -27,13 +27,12 @@ explícito). Producción: `de-vuelta.vercel.app`.
   `active_reports_public` con ubicación aproximada ~300 m) + flujo de
   vecinos con cuenta (`?next=` en auth), RLS de `sightings`
   (migración 0005), verificada end-to-end incluyendo negativos vía API.
-- **Fase 5**: 🟡 casi lista. Envíos funcionando (broadcast BJ + dirigido al
-  dueño, 200 en producción) y la configuración del service worker ya logró
-  suscribir un dispositivo con token real. Falta un paso manual: aceptar el
-  permiso en el prompt nativo de Chrome y ver llegar una notificación. Ver
+- **Fase 5**: ✅ completa y verificada end-to-end. Push OneSignal:
+  broadcast a BJ al crear reporte + aviso dirigido al dueño al llegar un
+  avistamiento. Notificación real entregada en producción. Antes de tocar
+  service workers o llamar `optOut()`, leer
   `.claude/skills/de-vuelta/references/troubleshooting.md` → "Push: la
-  configuración correcta (y cómo NO romperla)" — importante leerlo antes de
-  tocar workers o llamar `optOut()`.
+  configuración correcta (y cómo NO romperla)".
 - **Siguiente**: Fase 6 (matching manual + IA con Claude API — requiere
   `ANTHROPIC_API_KEY`, ver `.env.example`).
 

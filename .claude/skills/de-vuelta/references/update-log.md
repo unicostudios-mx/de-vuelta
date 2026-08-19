@@ -184,10 +184,19 @@ Se restauró esa configuración (commit `cc49559`): worker único
 ninguno de los dos, así que la disyuntiva que se le planteó a Nicolás
 estaba mal fundada.
 
-Único pendiente: aceptar el permiso en el prompt nativo de Chrome (no
-automatizable) y ver llegar la notificación. Detalle en
-troubleshooting.md → "Push: la configuración correcta (y cómo NO
-romperla)".
+**Fase 5 CERRADA y verificada** (mismo día, tras conceder el permiso):
+- `PushSubscription.token = SI`, `optedIn = true`.
+- Envío directo a la suscripción: entregado (`successful: 1, failed: 0`).
+- **Flujo real**: crear un reporte desde otra cuenta disparó el broadcast
+  (`[push] enviado f86be648…` en logs de producción) y se entregó con el
+  copy correcto y deep-link al reporte público.
+- Bug de copy encontrado en esa prueba y corregido: la especie salía en
+  crudo de la DB ("dog" en vez de "perro") — `lib/notifications.ts` ahora
+  la traduce, igual que el resto de la app.
+- Cuentas de prueba borradas; `/perdidos` limpio.
+
+Detalle de la configuración en troubleshooting.md → "Push: la
+configuración correcta (y cómo NO romperla)".
 
 ### Historial de la depuración (contexto, ya superado)
 

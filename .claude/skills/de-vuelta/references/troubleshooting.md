@@ -125,10 +125,9 @@ menú ⋮ de la fila → **Rotate** → copiar el token nuevo en ese momento
 
 ### Push: la configuración correcta (y cómo NO romperla)
 
-Estado al 2026-08-18. La configuración actual **sí logró suscribir** un
-dispositivo con token real (registro `Subscribed` en el dashboard, 19:00 h).
-Lo que quedó pendiente es solo re-conceder el permiso en el Chrome de
-Nicolás y ver llegar una notificación.
+**VERIFICADO end-to-end el 2026-08-18**: notificación entregada
+(`successful: 1`) tanto en envío directo como disparada por el flujo real
+de crear un reporte. Fase 5 cerrada.
 
 **La configuración que funciona** (no cambiarla a ciegas):
 - `public/OneSignalSDKWorker.js` — en la raíz, con el nombre exacto que

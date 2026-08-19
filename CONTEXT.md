@@ -104,7 +104,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 | 2 | Perfil de mascota | ✅ Completa — auth + CRUD + RLS real, verificada end-to-end |
 | 3 | Reportar pérdida | ✅ Completa — mapa Mapbox + invariante BJ + RLS, verificada end-to-end |
 | 4 | Reportar avistamiento | ✅ Completa — lado público con ubicación aproximada + flujo de vecinos, verificada end-to-end |
-| 5 | Notificaciones geográficas | 🟡 Casi lista — envíos OK (200 en prod) y suscripción con token verificada; falta aceptar el permiso nativo de Chrome y ver llegar una notificación |
+| 5 | Notificaciones geográficas | ✅ Completa — push OneSignal (broadcast BJ + dirigido al dueño), notificación real entregada y verificada en producción |
 | 6 | Matching (manual + IA) | Pendiente |
 | 7 | Capa comunitaria + adopción curada | Pendiente |
 | 8 | Sostenibilidad (pagos y patrocinios) | Pendiente |
