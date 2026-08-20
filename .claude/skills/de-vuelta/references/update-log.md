@@ -211,3 +211,35 @@ configuración correcta (y cómo NO romperla)".
   troubleshooting.md → "Cómo retomar".
 - Estado del código: todo commiteado y en producción. El envío funciona;
   falta que un navegador quede suscrito.
+
+## 2026-08-19 — Fase 6 completa (matching con IA)
+
+Trabajo hecho de forma autónoma mientras Nicolás dormía, con permisos
+elevados y la migración 0006 ya mostrada y autorizada ("ok, continua").
+
+- **Construido**: migración 0006 (RLS de `matches`), `lib/matching.ts`
+  (Claude vision con structured output de zod), disparo automático en
+  `createSighting`, `confirmMatch`/`rejectMatch`, badges y botones de
+  revisión, orden de avistamientos por score.
+- **Verificado en producción con fotos reales** (fixtures de placedog.net
+  subidas a Storage; el navegador las descarga por fetch, así que los bytes
+  nunca pasaron por el chat):
+  - misma perra, distinto encuadre → **0.97** ("parece la misma foto con
+    distinto encuadre" — el razonamiento fue correcto, no solo el número)
+  - perro claramente distinto → **0.02** (identificó edad, tamaño y color
+    como discrepancias)
+  - sin foto → sin score, con revisión manual disponible
+  - confirmar / descartar persisten y **el reporte sigue activo**
+  - negativos RLS: el vecino no lee (0 filas), no altera (0 filas
+    afectadas) ni inserta (403)
+- **Costo real medido**: 2 análisis = 2,827 tokens in / 204 out; crédito
+  bajó de $13.05 a $13.03 → **~$0.01 por avistamiento con foto**, la mitad
+  de lo estimado. Con el crédito actual alcanzan ~1,300 análisis.
+- **Limitación honesta de la prueba**: el caso positivo usó la misma foto
+  reencuadrada, no dos fotografías distintas del mismo animal. Es un test
+  más fácil que la realidad — la precisión con fotos genuinamente
+  diferentes (otra luz, otro ángulo, animal en movimiento) solo se sabrá
+  en campo durante el piloto.
+- Datos de prueba eliminados, incluidos los objetos de Storage.
+- De paso: `CONTEXT.md` todavía decía "Vecino Peludo" y el repo viejo en el
+  encabezado; corregido.

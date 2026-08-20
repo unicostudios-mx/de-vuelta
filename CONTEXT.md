@@ -1,4 +1,4 @@
-# Vecino Peludo — Contexto del Proyecto
+# De Vuelta — Contexto del Proyecto
 
 > Este documento es la fuente de verdad del proyecto. Se actualiza al final de cada fase.
 > Todo prompt a Claude Code debe empezar con: "Lee CONTEXT.md antes de proceder."
@@ -12,7 +12,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 **Nombre de la app:** De Vuelta
 **Pitch en una frase:** Convierte tu colonia en una red de búsqueda activa cuando una mascota se pierde.
 
-**Repositorio:** `unicostudios-mx/vecino-peludo`
+**Repositorio:** `unicostudios-mx/de-vuelta`
 **Organización:** Unico Studios
 
 ---
@@ -83,7 +83,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 
 **Deploy:**
 - Vercel (hosting Next.js)
-- GitHub (versión, repositorio en `unicostudios-mx/vecino-peludo`)
+- GitHub (versión, repositorio en `unicostudios-mx/de-vuelta`)
 
 ---
 
@@ -105,7 +105,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 | 3 | Reportar pérdida | ✅ Completa — mapa Mapbox + invariante BJ + RLS, verificada end-to-end |
 | 4 | Reportar avistamiento | ✅ Completa — lado público con ubicación aproximada + flujo de vecinos, verificada end-to-end |
 | 5 | Notificaciones geográficas | ✅ Completa — push OneSignal (broadcast BJ + dirigido al dueño), notificación real entregada y verificada en producción |
-| 6 | Matching (manual + IA) | Pendiente |
+| 6 | Matching (manual + IA) | ✅ Completa — score de Claude vision por avistamiento + confirmar/descartar, verificada en producción |
 | 7 | Capa comunitaria + adopción curada | Pendiente |
 | 8 | Sostenibilidad (pagos y patrocinios) | Pendiente |
 | 9 | Lanzamiento del piloto en BJ | Pendiente |
@@ -214,6 +214,12 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-08-16: Todos los envíos push son fire-and-forget (try/catch + log): la notificación jamás bloquea la creación de reportes/avistamientos
 - 2026-08-16: Primera vez que se usa `createAdminClient()`: leer `reporter_id` server-side para el push dirigido (el vecino no puede leer `lost_reports` por RLS y el dato nunca llega al cliente)
 - 2026-08-16: Sin filas en la tabla `notifications` todavía (historial in-app diferido a la capa comunitaria); tabla queda deny-all
+- 2026-08-19: Fase 6 — la IA compara la foto del avistamiento SOLO contra la mascota declarada por el vecino (1 llamada por avistamiento); el cross-match contra todos los reportes se difiere hasta que haya volumen
+- 2026-08-19: Confirmar un match NO resuelve el reporte — "la vieron" no es "ya está en casa"; el dueño cierra el reporte a mano
+- 2026-08-19: Migración 0006 sin columnas nuevas: los 3 estados de revisión se derivan de lo existente (`confirmed_at IS NULL` = pendiente; `confirmed` distingue confirmado de descartado)
+- 2026-08-19: `matches` sin policy de insert/delete — las filas las escribe el servidor con service role; si el usuario pudiera insertar, se fabricaría su propio score
+- 2026-08-19: Modelo `claude-opus-5` para el matching: distinguir *este* perro de *otro igualito* es donde la precisión importa. **Costo real medido: ~$0.01 por avistamiento con foto** (~1,400 tokens in / ~100 out), la mitad de lo estimado
+- 2026-08-19: Los scores son privados del dueño; exponerlos en `/perdidos` le diría al vecino qué tan "creíble" luce su aviso
 - 2026-08-16: Gotcha Vercel: las env vars "Sensitive" NO bajan con `vercel env pull` (llegan vacías a `.env.local` por diseño) — afecta `SUPABASE_SERVICE_ROLE_KEY` y `ONESIGNAL_REST_API_KEY` en desarrollo local; en prod se inyectan bien en runtime
 
 ## 12. Archivos clave creados en Fase 0
@@ -311,3 +317,20 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - `public/push/onesignal/OneSignalSDKWorker.js` — SW de OneSignal (importScripts del CDN), aislado del SW de Serwist
 - `lib/env.ts` — `publicEnv.onesignalAppId` + `serverEnv.onesignalRestApiKey`
 - Config manual hecha en OneSignal: plataforma Web (site `De Vuelta`, URL `de-vuelta.vercel.app`), API key "De Vuelta" (rotada 2026-08-16); Vercel: `NEXT_PUBLIC_ONESIGNAL_APP_ID` (no Sensitive) + `ONESIGNAL_REST_API_KEY` (Sensitive)
+
+## 18. Archivos clave creados en Fase 6
+
+**Migración (aplicada contra Supabase el 2026-08-19):**
+- `supabase/migrations/0006_matches_rls.sql` — RLS de `matches`: select/update solo para el dueño del reporte; sin insert/delete (las filas las escribe el servidor)
+
+**IA:**
+- `lib/matching.ts` — `scorePetMatch()` con Claude vision (`claude-opus-5`), structured output tipado con zod (`{score, reasoning}`), imágenes pasadas por URL pública de Storage. Prompt sesgado a ser conservador. Nunca lanza: devuelve `null` si falla.
+
+**Integración y UI:**
+- `app/perdidos/actions.ts` — `createSighting` crea la fila de `matches` siempre y la puntúa cuando hay ambas fotos
+- `app/reportes/actions.ts` — `confirmMatch` / `rejectMatch` (vía `reviewMatch`)
+- `components/match-badge.tsx` — porcentaje con color por token; estados Confirmado / Descartado / Sin foto
+- `components/match-review.tsx` — botones "Sí es mi mascota" / "No es"
+- `app/reportes/[id]/page.tsx` — avistamientos ordenados por score descendente
+
+**Verificado en producción (2026-08-19):** misma perra distinto encuadre → **0.97**; perro claramente distinto → **0.02**; sin foto → sin score con revisión manual disponible. Negativos RLS: el vecino no lee los matches (0 filas), no puede alterarlos (0 filas afectadas) ni insertarlos (403).

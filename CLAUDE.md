@@ -33,8 +33,14 @@ explícito). Producción: `de-vuelta.vercel.app`.
   service workers o llamar `optOut()`, leer
   `.claude/skills/de-vuelta/references/troubleshooting.md` → "Push: la
   configuración correcta (y cómo NO romperla)".
-- **Siguiente**: Fase 6 (matching manual + IA con Claude API — requiere
-  `ANTHROPIC_API_KEY`, ver `.env.example`).
+- **Fase 6**: ✅ completa. Matching con Claude vision: cada avistamiento con
+  foto recibe un score de coincidencia contra la mascota, y el dueño lo
+  confirma o descarta (`lib/matching.ts`, migración 0006). Verificado en
+  producción: 0.97 para la misma perra, 0.02 para un perro distinto. Costo
+  real ~$0.01 por avistamiento.
+- **Siguiente**: Fase 7 (capa comunitaria + adopción curada) — la fase más
+  grande del plan; leer el detalle en `CONTEXT.md` sección 7 antes de
+  empezar, tiene varias decisiones de producto abiertas.
 
 ## Comandos
 
@@ -58,10 +64,13 @@ supabase gen types typescript --linked > types/database.ts  # regenera tipos DB
   `createAdminClient()` con service role), `middleware.ts` (refresh de sesión,
   consumido por `middleware.ts` raíz). No meter lógica entre
   `createServerClient` y `getUser()` en el middleware.
-- `types/database.ts` está escrito a mano contra el schema 0001+0002;
-  regenerarlo con el CLI cuando haya cambios de schema.
-- RLS está **deny-all** en las 9 tablas: ninguna query de app funcionará hasta
-  escribir políticas (primera tarea de Fase 2, como migración 0003).
+- `types/database.ts` se **genera** con el CLI (`supabase gen types`).
+  Regenerarlo tras cada migración. OJO: el CLI escupe avisos a stdout que se
+  cuelan en la primera/última línea del archivo — revisarlas.
+- RLS: `users`/`pets` (0003), `lost_reports` (0004), `sightings` + view
+  pública (0005) y `matches` (0006) ya tienen políticas. Siguen **deny-all**
+  y sin usar: `notifications`, `partners`, `adoptable_pets`, `animal_stories`
+  — les toca en Fase 7.
 - shadcn/ui: base configurada (`components.json`, `lib/utils.ts`, tokens en
   `app/globals.css`). Agregar componentes con `npx shadcn add <x>` (funciona
   en local; en el entorno remoto de Claude la red lo bloquea).
@@ -84,13 +93,25 @@ supabase gen types typescript --linked > types/database.ts  # regenera tipos DB
 
 ## Variables de entorno (.env.local — pedir al usuario, nunca inventar)
 
-`NEXT_PUBLIC_SUPABASE_URL` · `NEXT_PUBLIC_SUPABASE_ANON_KEY` ·
-`SUPABASE_SERVICE_ROLE_KEY` · `NEXT_PUBLIC_MAPBOX_TOKEN`
-(futuras: OneSignal F5, Anthropic F6, MercadoPago F8 — ver `.env.example`)
+Configuradas en Vercel y en uso: `NEXT_PUBLIC_SUPABASE_URL` ·
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` · `SUPABASE_SERVICE_ROLE_KEY` ·
+`NEXT_PUBLIC_MAPBOX_TOKEN` · `NEXT_PUBLIC_ONESIGNAL_APP_ID` ·
+`ONESIGNAL_REST_API_KEY` · `ANTHROPIC_API_KEY`. Futura: MercadoPago (F8).
 
-## Tarea inmediata pendiente (sesión local)
+OJO: las marcadas **Sensitive** en Vercel (`SUPABASE_SERVICE_ROLE_KEY`,
+`ONESIGNAL_REST_API_KEY`, `ANTHROPIC_API_KEY`) bajan **vacías** con
+`vercel env pull` — hay que reponerlas a mano en `.env.local`. Y las
+`NEXT_PUBLIC_*` NO deben marcarse Sensitive (no se inyectan en el build).
 
-Conectar Vercel con el CLI autenticado del usuario:
-`vercel link --yes` → `vercel git connect` → `vercel env add` (las 4 de arriba,
-production) → `vercel --prod`. Verificar que el build de Vercel corra el
-postinstall del polígono y sirva `/manifest.json` y `/sw.js`.
+## Pendientes conocidos
+
+- **Antes del piloto (Fase 9)**: reactivar "Confirm email" en Supabase
+  (hoy apagado para poder crear cuentas de prueba sin inbox real).
+- **Vistazo visual humano a los mapas**: el panel de navegador de las
+  sesiones de Claude no compone el canvas de Mapbox, así que
+  `/perdidos` y el detalle del dueño se verificaron por evidencia
+  indirecta. Un `npm run dev` de 2 minutos lo confirma.
+- **Deuda menor**: las rutas con mapa pesan ~620-650 kB First Load por
+  `mapbox-gl`; candidato a `next/dynamic` si llega a molestar.
+- **Sin implementar**: el estado `expired` de reportes (necesita un job
+  programado).
