@@ -243,3 +243,47 @@ elevados y la migración 0006 ya mostrada y autorizada ("ok, continua").
 - Datos de prueba eliminados, incluidos los objetos de Storage.
 - De paso: `CONTEXT.md` todavía decía "Vecino Peludo" y el repo viejo en el
   encabezado; corregido.
+
+### Revisión propia y endurecimiento de la Fase 6
+
+Corrí `/code-review high` contra mi propio trabajo antes de darlo por
+cerrado. Encontró cinco defectos reales, todos corregidos y redesplegados:
+
+1. La llamada de visión corría dentro de la Server Action del vecino, con
+   los defaults del SDK (10 min de timeout, 2 reintentos).
+2. El badge decía "No se pudo comparar" tanto cuando la IA fallaba como
+   cuando el vecino no había subido foto — dos situaciones distintas para
+   el dueño.
+3. Revisar un avistamiento era irreversible: un dueño angustiado que le
+   atina al botón equivocado se quedaba sin salida.
+4. El `update()` de la revisión no pedía `.select()`, así que un update
+   bloqueado por RLS respondía "ok" con cero filas y el dueño creía que se
+   había guardado.
+5. `new Anthropic()` leía `process.env` directo, saltándose `lib/env.ts`.
+
+**Latencia — medida, no estimada.** Con las correcciones puestas, cronometré
+el flujo real en producción: **27 segundos** entre que el vecino da enviar y
+ve la confirmación. En una urgencia eso se lee como "falló", y la reacción
+natural es reenviar — avistamiento duplicado y segundo push al dueño. El
+avistamiento ya está guardado antes de todo eso, así que nada de eso
+necesita bloquear la respuesta: el push, la fila de match y el análisis se
+movieron a `after()` de `next/server`.
+
+**Reverificado en producción**: respuesta al vecino en **4.7 s** (lo que
+queda es la subida de la foto, que sí tiene que ser síncrona porque la fila
+del avistamiento necesita la URL). El score siguió llegando después — un
+avistamiento con foto de otro perro quedó en 0.02 cuando el vecino ya tenía
+su confirmación en pantalla.
+
+Datos de prueba de esta segunda ronda eliminados también (cuentas, filas y
+objetos de Storage; producción quedó en 0 en las 5 tablas).
+
+### Riesgo abierto que vale la pena nombrar
+
+No hay rate limiting sobre las llamadas a la API de Anthropic. Hoy cada
+avistamiento con foto dispara un análisis (~$0.01) y cualquiera con cuenta
+puede mandar avistamientos. A escala de piloto no es un problema, pero
+antes de abrir al público conviene un límite por usuario o por reporte —
+si no, un usuario malicioso puede drenar el crédito subiendo fotos en
+serie. Lo dejo señalado, no resuelto: es una decisión de producto (¿cuántos
+avistamientos por hora son legítimos?) más que técnica.

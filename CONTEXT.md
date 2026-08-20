@@ -220,6 +220,7 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - 2026-08-19: `matches` sin policy de insert/delete — las filas las escribe el servidor con service role; si el usuario pudiera insertar, se fabricaría su propio score
 - 2026-08-19: Modelo `claude-opus-5` para el matching: distinguir *este* perro de *otro igualito* es donde la precisión importa. **Costo real medido: ~$0.01 por avistamiento con foto** (~1,400 tokens in / ~100 out), la mitad de lo estimado
 - 2026-08-19: Los scores son privados del dueño; exponerlos en `/perdidos` le diría al vecino qué tan "creíble" luce su aviso
+- 2026-08-19: El post-procesamiento del avistamiento (push + fila de match + visión) corre en `after()` de `next/server`, no antes de responder. Medido en producción: bloqueando eran **27 s** de spinner para el vecino; con `after()`, **4.7 s**. En una urgencia, 27 s se leen como "falló" y el vecino reenvía — avistamiento duplicado y segundo push al dueño
 - 2026-08-16: Gotcha Vercel: las env vars "Sensitive" NO bajan con `vercel env pull` (llegan vacías a `.env.local` por diseño) — afecta `SUPABASE_SERVICE_ROLE_KEY` y `ONESIGNAL_REST_API_KEY` en desarrollo local; en prod se inyectan bien en runtime
 
 ## 12. Archivos clave creados en Fase 0
@@ -333,4 +334,6 @@ App hiperlocal para reunir mascotas perdidas con sus dueños y coordinar rescate
 - `components/match-review.tsx` — botones "Sí es mi mascota" / "No es"
 - `app/reportes/[id]/page.tsx` — avistamientos ordenados por score descendente
 
-**Verificado en producción (2026-08-19):** misma perra distinto encuadre → **0.97**; perro claramente distinto → **0.02**; sin foto → sin score con revisión manual disponible. Negativos RLS: el vecino no lee los matches (0 filas), no puede alterarlos (0 filas afectadas) ni insertarlos (403).
+**Verificado en producción (2026-08-19):** misma perra distinto encuadre → **0.97**; perro claramente distinto → **0.02**; sin foto → sin score con revisión manual disponible. Negativos RLS: el vecino no lee los matches (0 filas), no puede alterarlos (0 filas afectadas) ni insertarlos (403). Tras mover el post-procesamiento a `after()`, reverificado: respuesta al vecino en **4.7 s** (antes 27 s) y el score sigue llegando — un avistamiento con foto de otro perro quedó en 0.02 segundos después de que el vecino ya tenía su confirmación.
+
+**Límite honesto de la verificación:** el caso positivo usó la misma foto original recortada, no dos fotografías genuinamente distintas del mismo animal. La precisión real con fotos de campo (otra luz, otro ángulo, el animal sucio o asustado) está sin medir y solo el piloto la va a decir.

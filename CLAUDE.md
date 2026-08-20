@@ -37,7 +37,10 @@ explícito). Producción: `de-vuelta.vercel.app`.
   foto recibe un score de coincidencia contra la mascota, y el dueño lo
   confirma o descarta (`lib/matching.ts`, migración 0006). Verificado en
   producción: 0.97 para la misma perra, 0.02 para un perro distinto. Costo
-  real ~$0.01 por avistamiento.
+  real ~$0.01 por avistamiento. El push, la fila de match y el análisis
+  corren en `after()` de `next/server` — fuera del camino crítico: si algo
+  vuelve a bloquear la respuesta del vecino, la espera se dispara a ~27 s.
+  Sin rate limiting todavía sobre las llamadas a la IA (ver update-log).
 - **Siguiente**: Fase 7 (capa comunitaria + adopción curada) — la fase más
   grande del plan; leer el detalle en `CONTEXT.md` sección 7 antes de
   empezar, tiene varias decisiones de producto abiertas.
