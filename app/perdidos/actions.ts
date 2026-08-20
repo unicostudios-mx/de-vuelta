@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isInBenitoJuarez } from "@/lib/geo/validate-bj";
 import { notifySightingToOwner } from "@/lib/notifications";
@@ -79,58 +80,62 @@ export async function createSighting(
     };
   }
 
-  // Todo lo que sigue es amplificación: el avistamiento ya está guardado y
-  // nada de esto puede tumbar la respuesta al vecino. El vecino no puede
-  // leer lost_reports (RLS), así que los datos del reporte se obtienen
-  // server-side con el admin client y nunca llegan al cliente.
-  try {
-    const admin = createAdminClient();
-    const { data: report } = await admin
-      .from("lost_reports")
-      .select("reporter_id, pets(name, species, breed, color, description, photo_urls)")
-      .eq("id", reportId)
-      .single();
+  // Todo lo que sigue corre DESPUÉS de responderle al vecino: el push y el
+  // análisis de la foto suman ~25s, y hacerlo esperar mirando un spinner en
+  // plena urgencia lo llevaría a creer que falló y reenviar. Su avistamiento
+  // ya está guardado; el resto es amplificación.
+  // Los datos del reporte se leen con el admin client porque el vecino no
+  // puede leer lost_reports (RLS) — nunca llegan al cliente.
+  after(async () => {
+    try {
+      const admin = createAdminClient();
+      const { data: report } = await admin
+        .from("lost_reports")
+        .select("reporter_id, pets(name, species, breed, color, description, photo_urls)")
+        .eq("id", reportId)
+        .single();
 
-    if (report?.reporter_id) {
-      await notifySightingToOwner({
-        ownerId: report.reporter_id,
-        reportId,
-        petName: report.pets?.name ?? "tu mascota",
-      });
-    }
-
-    // Fila de match siempre, con o sin score: es lo que habilita la
-    // revisión manual del dueño aunque el vecino no haya subido foto.
-    const { data: match } = await admin
-      .from("matches")
-      .insert({ report_id: reportId, sighting_id: sighting.id })
-      .select("id")
-      .single();
-
-    const petPhotoUrl = report?.pets?.photo_urls?.[0];
-    if (match && petPhotoUrl && photoUrls[0]) {
-      const result = await scorePetMatch({
-        sightingPhotoUrl: photoUrls[0],
-        petPhotoUrl,
-        pet: {
-          name: report.pets!.name,
-          species: report.pets!.species,
-          breed: report.pets!.breed,
-          color: report.pets!.color,
-          description: report.pets!.description,
-        },
-      });
-      if (result) {
-        await admin
-          .from("matches")
-          .update({ confidence: result.score })
-          .eq("id", match.id);
-        console.log("[match] score", result.score, "—", result.reasoning);
+      if (report?.reporter_id) {
+        await notifySightingToOwner({
+          ownerId: report.reporter_id,
+          reportId,
+          petName: report.pets?.name ?? "tu mascota",
+        });
       }
+
+      // Fila de match siempre, con o sin score: es lo que habilita la
+      // revisión manual del dueño aunque el vecino no haya subido foto.
+      const { data: match } = await admin
+        .from("matches")
+        .insert({ report_id: reportId, sighting_id: sighting.id })
+        .select("id")
+        .single();
+
+      const petPhotoUrl = report?.pets?.photo_urls?.[0];
+      if (match && petPhotoUrl && photoUrls[0]) {
+        const result = await scorePetMatch({
+          sightingPhotoUrl: photoUrls[0],
+          petPhotoUrl,
+          pet: {
+            name: report.pets!.name,
+            species: report.pets!.species,
+            breed: report.pets!.breed,
+            color: report.pets!.color,
+            description: report.pets!.description,
+          },
+        });
+        if (result) {
+          await admin
+            .from("matches")
+            .update({ confidence: result.score })
+            .eq("id", match.id);
+          console.log("[match] score", result.score, "—", result.reasoning);
+        }
+      }
+    } catch (err) {
+      console.error("[sighting] post-procesamiento falló", err);
     }
-  } catch (err) {
-    console.error("[sighting] post-procesamiento falló", err);
-  }
+  });
 
   revalidatePath(`/perdidos/${reportId}`);
   redirect(`/perdidos/${reportId}?aviso=ok`);
