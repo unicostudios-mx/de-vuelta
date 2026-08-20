@@ -3,6 +3,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
+import { serverEnv } from "@/lib/env";
 
 // Comparación de fotos con Claude vision. Igual que las notificaciones, es
 // amplificación: si falla, el avistamiento ya está guardado y el dueño
@@ -49,7 +50,15 @@ export async function scorePetMatch(args: {
   pet: PetDescription;
 }): Promise<MatchScore | null> {
   try {
-    const client = new Anthropic();
+    // El timeout corto y sin reintentos es deliberado: esta llamada corre
+    // dentro de la Server Action del vecino. Si se alargara, él vería un
+    // error después de que su avistamiento ya se guardó, y al reintentar
+    // crearía un duplicado. Prefiero quedarme sin score.
+    const client = new Anthropic({
+      apiKey: serverEnv.anthropicApiKey,
+      timeout: 25_000,
+      maxRetries: 0,
+    });
 
     const señas = [
       SPECIES_ES[args.pet.species ?? ""] ?? args.pet.species,

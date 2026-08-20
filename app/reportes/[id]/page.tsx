@@ -146,6 +146,7 @@ export default async function ReporteDetallePage({
                           confidence: match.confidence,
                           confirmed: match.confirmed,
                           confirmedAt: match.confirmed_at,
+                          hasPhoto: s.photo_urls.length > 0,
                         }}
                       />
                     )}
@@ -162,10 +163,11 @@ export default async function ReporteDetallePage({
                       className="mt-2 rounded-md object-cover"
                     />
                   )}
-                  {match && match.confirmed_at === null && (
+                  {match && (
                     <MatchReview
                       confirmAction={confirmMatch.bind(null, match.id)}
                       rejectAction={rejectMatch.bind(null, match.id)}
+                      reviewed={match.confirmed_at !== null}
                     />
                   )}
                 </li>

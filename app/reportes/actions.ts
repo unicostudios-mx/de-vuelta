@@ -92,17 +92,22 @@ async function reviewMatch(matchId: string, confirmed: boolean): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Sesión expirada.");
 
-  // RLS restringe el update a los matches de reportes propios.
-  const { error } = await supabase
+  // RLS restringe el update a los matches de reportes propios. El select
+  // devuelve las filas afectadas: sin él, un update bloqueado por RLS
+  // responde "ok" con cero filas y el dueño creería que se guardó.
+  const { data, error } = await supabase
     .from("matches")
     .update({
       confirmed,
       confirmed_by: user.id,
       confirmed_at: new Date().toISOString(),
     })
-    .eq("id", matchId);
+    .eq("id", matchId)
+    .select("id");
 
-  if (error) throw new Error("No se pudo guardar tu respuesta.");
+  if (error || !data || data.length === 0) {
+    throw new Error("No se pudo guardar tu respuesta.");
+  }
 
   revalidatePath("/reportes", "layout");
 }

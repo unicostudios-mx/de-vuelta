@@ -3,6 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { SightingForm } from "@/components/sighting-form";
 import { createSighting } from "@/app/perdidos/actions";
 
+// La Server Action de esta ruta llama a Claude vision (timeout de 25s en
+// lib/matching.ts). El default de Vercel es más corto, así que la función
+// moriría antes de tiempo — y el vecino vería un error con su avistamiento
+// ya guardado.
+export const maxDuration = 60;
+
 export default async function AvistamientoPage({
   params,
 }: {

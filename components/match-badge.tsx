@@ -4,6 +4,10 @@ export type MatchState = {
   confidence: number | null;
   confirmed: boolean;
   confirmedAt: string | null;
+  /** Si el avistamiento traía foto. Sin ella no hay nada que comparar;
+   *  con ella, un score nulo significa que el análisis falló — decir
+   *  "sin foto" ahí sería mentir justo encima de la foto. */
+  hasPhoto: boolean;
 };
 
 /**
@@ -29,7 +33,7 @@ export function MatchBadge({ match }: { match: MatchState }) {
   if (match.confidence === null) {
     return (
       <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-        Sin foto para comparar
+        {match.hasPhoto ? "No se pudo comparar" : "Sin foto para comparar"}
       </span>
     );
   }

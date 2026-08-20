@@ -62,4 +62,7 @@ export const serverEnv = {
       process.env.ONESIGNAL_REST_API_KEY
     );
   },
+  get anthropicApiKey() {
+    return serverOnly("ANTHROPIC_API_KEY", process.env.ANTHROPIC_API_KEY);
+  },
 };

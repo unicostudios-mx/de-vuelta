@@ -9,14 +9,27 @@ import { Button } from "@/components/ui/button";
 export function MatchReview({
   confirmAction,
   rejectAction,
+  reviewed = false,
 }: {
   confirmAction: () => Promise<void>;
   rejectAction: () => Promise<void>;
+  /** Ya revisado: los botones siguen visibles para poder corregir. Un dueño
+   *  angustiado que le atina al botón equivocado no debería quedarse sin
+   *  salida, y RLS permite el cambio de todas formas. */
+  reviewed?: boolean;
 }) {
   return (
-    <div className="mt-3 flex gap-2">
+    <div className="mt-3 flex items-center gap-2">
+      {reviewed && (
+        <span className="text-xs text-muted-foreground">¿Te equivocaste?</span>
+      )}
       <form action={confirmAction}>
-        <Button type="submit" size="sm" className="bg-success text-white hover:bg-success/90">
+        <Button
+          type="submit"
+          size="sm"
+          variant={reviewed ? "outline" : "default"}
+          className={reviewed ? undefined : "bg-success text-white hover:bg-success/90"}
+        >
           Sí es mi mascota
         </Button>
       </form>
