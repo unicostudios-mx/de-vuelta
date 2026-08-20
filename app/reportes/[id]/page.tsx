@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { LocationPicker } from "@/components/location-picker";
 import { ReportStatusBadge } from "@/components/report-status-badge";
 import { ResolveReportButton } from "@/components/resolve-report-button";
-import { resolveReport } from "@/app/reportes/actions";
+import { MatchBadge } from "@/components/match-badge";
+import { MatchReview } from "@/components/match-review";
+import { resolveReport, confirmMatch, rejectMatch } from "@/app/reportes/actions";
 
 const dateFmt = new Intl.DateTimeFormat("es-MX", {
   dateStyle: "full",
@@ -30,12 +32,25 @@ export default async function ReporteDetallePage({
 
   if (!report) notFound();
 
-  // RLS: como dueño del reporte, ve todos los avistamientos asociados.
-  const { data: sightings } = await supabase
-    .from("sightings")
-    .select("*")
-    .eq("report_id", id)
-    .order("spotted_at", { ascending: false });
+  // RLS: como dueño del reporte, ve todos los avistamientos y sus matches.
+  const [{ data: rawSightings }, { data: matches }] = await Promise.all([
+    supabase.from("sightings").select("*").eq("report_id", id),
+    supabase.from("matches").select("*").eq("report_id", id),
+  ]);
+
+  const matchBySighting = new Map((matches ?? []).map((m) => [m.sighting_id, m]));
+
+  // Orden por score descendente: lo que el dueño necesita saber primero es
+  // cuál avistamiento perseguir. Sin score van al final, pero por fecha —
+  // no tener foto no los hace menos urgentes entre sí.
+  const sightings = (rawSightings ?? []).sort((a, b) => {
+    const sa = matchBySighting.get(a.id)?.confidence;
+    const sb = matchBySighting.get(b.id)?.confidence;
+    if (sa != null && sb != null) return sb - sa;
+    if (sa != null) return -1;
+    if (sb != null) return 1;
+    return new Date(b.spotted_at).getTime() - new Date(a.spotted_at).getTime();
+  });
 
   return (
     <main className="mx-auto max-w-lg px-6 py-10">
@@ -117,25 +132,45 @@ export default async function ReporteDetallePage({
           </p>
         ) : (
           <ul className="space-y-4">
-            {sightings.map((s) => (
-              <li key={s.id} className="rounded-md border border-border p-4">
-                <p className="text-sm font-medium text-foreground">
-                  {dateFmt.format(new Date(s.spotted_at))}
-                </p>
-                {s.notes && (
-                  <p className="mt-1 text-sm text-muted-foreground">{s.notes}</p>
-                )}
-                {s.photo_urls[0] && (
-                  <Image
-                    src={s.photo_urls[0]}
-                    alt="Foto del avistamiento"
-                    width={320}
-                    height={180}
-                    className="mt-2 rounded-md object-cover"
-                  />
-                )}
-              </li>
-            ))}
+            {sightings.map((s) => {
+              const match = matchBySighting.get(s.id);
+              return (
+                <li key={s.id} className="rounded-md border border-border p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-foreground">
+                      {dateFmt.format(new Date(s.spotted_at))}
+                    </p>
+                    {match && (
+                      <MatchBadge
+                        match={{
+                          confidence: match.confidence,
+                          confirmed: match.confirmed,
+                          confirmedAt: match.confirmed_at,
+                        }}
+                      />
+                    )}
+                  </div>
+                  {s.notes && (
+                    <p className="mt-1 text-sm text-muted-foreground">{s.notes}</p>
+                  )}
+                  {s.photo_urls[0] && (
+                    <Image
+                      src={s.photo_urls[0]}
+                      alt="Foto del avistamiento"
+                      width={320}
+                      height={180}
+                      className="mt-2 rounded-md object-cover"
+                    />
+                  )}
+                  {match && match.confirmed_at === null && (
+                    <MatchReview
+                      confirmAction={confirmMatch.bind(null, match.id)}
+                      rejectAction={rejectMatch.bind(null, match.id)}
+                    />
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

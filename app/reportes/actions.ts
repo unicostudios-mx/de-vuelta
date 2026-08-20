@@ -80,6 +80,41 @@ export async function createReport(
   redirect("/reportes");
 }
 
+/**
+ * El dueño revisa un avistamiento. `confirmed_at` marca que ya lo revisó;
+ * `confirmed` distingue "sí es mi mascota" de "no es". Confirmar NO resuelve
+ * el reporte: verla no es tenerla de vuelta.
+ */
+async function reviewMatch(matchId: string, confirmed: boolean): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sesión expirada.");
+
+  // RLS restringe el update a los matches de reportes propios.
+  const { error } = await supabase
+    .from("matches")
+    .update({
+      confirmed,
+      confirmed_by: user.id,
+      confirmed_at: new Date().toISOString(),
+    })
+    .eq("id", matchId);
+
+  if (error) throw new Error("No se pudo guardar tu respuesta.");
+
+  revalidatePath("/reportes", "layout");
+}
+
+export async function confirmMatch(matchId: string): Promise<void> {
+  await reviewMatch(matchId, true);
+}
+
+export async function rejectMatch(matchId: string): Promise<void> {
+  await reviewMatch(matchId, false);
+}
+
 export async function resolveReport(reportId: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isInBenitoJuarez } from "@/lib/geo/validate-bj";
 import { notifySightingToOwner } from "@/lib/notifications";
+import { scorePetMatch } from "@/lib/matching";
 
 export type SightingActionState = { error: string | null };
 
@@ -57,33 +58,39 @@ export async function createSighting(
     );
   }
 
-  const { error } = await supabase.from("sightings").insert({
-    report_id: reportId,
-    spotter_id: user.id,
-    lat: parsed.data.lat,
-    lng: parsed.data.lng,
-    spotted_at: parsed.data.spottedAt.toISOString(),
-    notes: parsed.data.notes || null,
-    photo_urls: photoUrls,
-  });
+  const { data: sighting, error } = await supabase
+    .from("sightings")
+    .insert({
+      report_id: reportId,
+      spotter_id: user.id,
+      lat: parsed.data.lat,
+      lng: parsed.data.lng,
+      spotted_at: parsed.data.spottedAt.toISOString(),
+      notes: parsed.data.notes || null,
+      photo_urls: photoUrls,
+    })
+    .select("id")
+    .single();
 
   // RLS rechaza si el reporte no existe o ya no está activo.
-  if (error) {
+  if (error || !sighting) {
     return {
       error: "No se pudo enviar el aviso. Puede que el reporte ya esté resuelto.",
     };
   }
 
-  // Aviso dirigido al dueño. El vecino no puede leer lost_reports (RLS),
-  // así que el reporter_id se obtiene server-side con el admin client —
-  // el dato nunca llega al cliente. Nunca bloquea el flujo.
+  // Todo lo que sigue es amplificación: el avistamiento ya está guardado y
+  // nada de esto puede tumbar la respuesta al vecino. El vecino no puede
+  // leer lost_reports (RLS), así que los datos del reporte se obtienen
+  // server-side con el admin client y nunca llegan al cliente.
   try {
     const admin = createAdminClient();
     const { data: report } = await admin
       .from("lost_reports")
-      .select("reporter_id, pets(name)")
+      .select("reporter_id, pets(name, species, breed, color, description, photo_urls)")
       .eq("id", reportId)
       .single();
+
     if (report?.reporter_id) {
       await notifySightingToOwner({
         ownerId: report.reporter_id,
@@ -91,8 +98,38 @@ export async function createSighting(
         petName: report.pets?.name ?? "tu mascota",
       });
     }
+
+    // Fila de match siempre, con o sin score: es lo que habilita la
+    // revisión manual del dueño aunque el vecino no haya subido foto.
+    const { data: match } = await admin
+      .from("matches")
+      .insert({ report_id: reportId, sighting_id: sighting.id })
+      .select("id")
+      .single();
+
+    const petPhotoUrl = report?.pets?.photo_urls?.[0];
+    if (match && petPhotoUrl && photoUrls[0]) {
+      const result = await scorePetMatch({
+        sightingPhotoUrl: photoUrls[0],
+        petPhotoUrl,
+        pet: {
+          name: report.pets!.name,
+          species: report.pets!.species,
+          breed: report.pets!.breed,
+          color: report.pets!.color,
+          description: report.pets!.description,
+        },
+      });
+      if (result) {
+        await admin
+          .from("matches")
+          .update({ confidence: result.score })
+          .eq("id", match.id);
+        console.log("[match] score", result.score, "—", result.reasoning);
+      }
+    }
   } catch (err) {
-    console.error("[push] no se pudo notificar al dueño", err);
+    console.error("[sighting] post-procesamiento falló", err);
   }
 
   revalidatePath(`/perdidos/${reportId}`);
