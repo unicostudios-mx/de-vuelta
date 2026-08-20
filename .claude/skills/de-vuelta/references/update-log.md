@@ -287,3 +287,35 @@ antes de abrir al público conviene un límite por usuario o por reporte —
 si no, un usuario malicioso puede drenar el crédito subiendo fotos en
 serie. Lo dejo señalado, no resuelto: es una decisión de producto (¿cuántos
 avistamientos por hora son legítimos?) más que técnica.
+
+## 2026-08-20 — Endurecimiento para el piloto: rate limiting
+
+Cerrado el riesgo que había quedado señalado sin resolver. `lib/rate-limit.ts`
++ migración 0007 (solo dos índices).
+
+La decisión de diseño que importa: **los dos límites no se parecen**.
+
+- **20 avisos por vecino por hora** → rechaza el envío, con mensaje en
+  español. Corre *antes* de subir la foto, así que quien abusa tampoco nos
+  llena el Storage. El número está alto a propósito: negarle un
+  avistamiento real a alguien en plena urgencia es peor falla que pagar
+  unos pesos de más.
+- **8 análisis por vecino y 25 por reporte, por hora** → solo se salta el
+  score. El aviso se guarda igual, la fila de `matches` se crea igual y el
+  dueño conserva la revisión manual. El techo por reporte cubre lo que el
+  de usuario no puede: varias cuentas apuntándole al mismo caso.
+
+Los dos fallan en direcciones opuestas si la consulta de conteo revienta:
+el primero deja pasar, el segundo bloquea. No es descuido — lo que está en
+juego en cada uno es distinto.
+
+**Verificado en producción**, no razonado:
+- caso feliz con los límites activos → 0.97 en 4.9 s (nada se rompió)
+- aviso número 9 → guardado, fila de match creada, `confidence` en null
+- aviso número 21 → rechazado con el mensaje correcto, y **cero escrituras**:
+  20 avisos en la tabla y solo 2 fotos en Storage, lo que prueba que el
+  chequeo corre antes de la subida
+- la consulta con join (`sightings ⋈ matches`) se validó con datos reales:
+  contra tablas vacías devolvía 0 y no probaba nada
+
+Datos de prueba eliminados; producción de vuelta en 0 en las 5 tablas.
