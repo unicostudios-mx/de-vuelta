@@ -8,6 +8,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isInBenitoJuarez } from "@/lib/geo/validate-bj";
 import { notifySightingToOwner } from "@/lib/notifications";
 import { scorePetMatch } from "@/lib/matching";
+import { puedeMandarAviso, puedeAnalizarFoto } from "@/lib/rate-limit";
 
 export type SightingActionState = { error: string | null };
 
@@ -42,6 +43,15 @@ export async function createSighting(
   // Invariante geográfico: la validación del cliente es UX; esta protege la DB.
   if (!isInBenitoJuarez(parsed.data.lat, parsed.data.lng)) {
     return { error: "La ubicación debe estar dentro de Benito Juárez." };
+  }
+
+  // Antes de subir nada: quien pasa el techo horario no nos llena el
+  // Storage ni dispara pushes en serie al dueño.
+  if (!(await puedeMandarAviso(supabase, user.id))) {
+    return {
+      error:
+        "Recibimos muchos avisos tuyos en la última hora. Espera un poco antes de mandar otro.",
+    };
   }
 
   const photoUrls: string[] = [];
@@ -113,6 +123,12 @@ export async function createSighting(
 
       const petPhotoUrl = report?.pets?.photo_urls?.[0];
       if (match && petPhotoUrl && photoUrls[0]) {
+        // Saltarse el análisis degrada el lujo, no la función: el aviso ya
+        // está guardado y el dueño lo revisa a mano.
+        if (!(await puedeAnalizarFoto(admin, { spotterId: user.id, reportId }))) {
+          console.warn("[match] análisis omitido por límite de uso", { reportId });
+          return;
+        }
         const result = await scorePetMatch({
           sightingPhotoUrl: photoUrls[0],
           petPhotoUrl,
