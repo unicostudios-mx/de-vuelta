@@ -40,7 +40,9 @@ explícito). Producción: `de-vuelta.vercel.app`.
   real ~$0.01 por avistamiento. El push, la fila de match y el análisis
   corren en `after()` de `next/server` — fuera del camino crítico: si algo
   vuelve a bloquear la respuesta del vecino, la espera se dispara a ~27 s.
-  Sin rate limiting todavía sobre las llamadas a la IA (ver update-log).
+  Rate limiting en `lib/rate-limit.ts`: 20 avisos/hora por vecino rechazan
+  el envío; 8 análisis/hora por vecino y 25/hora por reporte solo saltan el
+  score (el aviso se guarda y el dueño revisa a mano).
 - **Siguiente**: Fase 7 (capa comunitaria + adopción curada) — la fase más
   grande del plan; leer el detalle en `CONTEXT.md` sección 7 antes de
   empezar, tiene varias decisiones de producto abiertas.
@@ -109,7 +111,9 @@ OJO: las marcadas **Sensitive** en Vercel (`SUPABASE_SERVICE_ROLE_KEY`,
 ## Pendientes conocidos
 
 - **Antes del piloto (Fase 9)**: reactivar "Confirm email" en Supabase
-  (hoy apagado para poder crear cuentas de prueba sin inbox real).
+  (hoy apagado). OJO: reactivarlo NO estorba las pruebas — las cuentas de
+  prueba se crean con la Admin API y `email_confirm: true`, que se lo
+  salta. Solo afecta el registro por el formulario.
 - **Vistazo visual humano a los mapas**: el panel de navegador de las
   sesiones de Claude no compone el canvas de Mapbox, así que
   `/perdidos` y el detalle del dueño se verificaron por evidencia
