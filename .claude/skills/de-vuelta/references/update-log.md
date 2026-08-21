@@ -319,3 +319,41 @@ juego en cada uno es distinto.
   contra tablas vacías devolvía 0 y no probaba nada
 
 Datos de prueba eliminados; producción de vuelta en 0 en las 5 tablas.
+
+## 2026-08-20 — Vistazo visual a los mapas (y lo que apareció debajo)
+
+Los mapas llevaban semanas como "pendiente de revisión humana" porque el
+panel de navegador de Claude Code no compone el canvas de Mapbox. **Claude
+in Chrome sí lo compone** — ese es el camino para cualquier verificación
+visual futura de este proyecto.
+
+Ambos mapas correctos: `/perdidos` con pines rojos y popup "Ver reporte";
+detalle del dueño con pin rojo + verdes y zoom ajustado a los pines.
+**Los tiles tardan ~4 s en pintar** — mi primera captura salió con el mapa
+en blanco y los pines flotando, y parecía un bug que no existía.
+
+### Lo que sí estaba roto no era el mapa
+
+La foto del avistamiento se declaraba `320×180` y renderizaba **320×427**:
+el preflight de Tailwind pone `height: auto` sobre las imágenes y la altura
+declarada se ignora. Cada tarjeta medía **557 px**, así que en un teléfono
+el dueño veía un avistamiento a la vez y tenía que pasar de largo una foto
+enorme para llegar a los botones de confirmar/descartar.
+
+La decisión de diseño: recortar la miniatura resuelve el escaneo pero
+rompe el juicio — el recorte puede cortar justo la seña que decide si es su
+perro. Así que la miniatura **no es la única versión**: enlaza a la foto
+original. Compacto para comparar, completo para decidir.
+
+Medido después: tarjetas de **285 px** (antes 557). Caben tres
+avistamientos donde cabía uno.
+
+De paso, en `/perdidos` la tarjeta de una mascota sin foto no renderizaba
+caja de imagen y la rejilla la estiraba para igualar a su vecina — el hueco
+blanco se leía como imagen rota. Ahora la caja va siempre y dice "Sin foto",
+que además es información útil sobre un reporte.
+
+Nota: el recorte se dejó centrado (`object-cover` a secas). Con fotos
+arbitrarias de vecinos, centrar es la apuesta segura; sesgarlo hacia arriba
+ayudaría a los retratos verticales y perjudicaría a los horizontales, y el
+enlace a la foto completa ya cubre el caso.
