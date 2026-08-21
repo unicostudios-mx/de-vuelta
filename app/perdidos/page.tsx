@@ -67,16 +67,23 @@ export default async function PerdidosPage() {
             {rows.map((r) => (
               <Link key={r.id} href={`/perdidos/${r.id}`}>
                 <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
-                  {r.photo_urls?.[0] && (
-                    <div className="relative aspect-video w-full">
+                  {/* La caja va siempre, con foto o sin ella: en una
+                      rejilla, la tarjeta sin foto se estira para igualar a
+                      su vecina y el hueco se lee como imagen rota. */}
+                  <div className="relative aspect-video w-full bg-muted">
+                    {r.photo_urls?.[0] ? (
                       <Image
                         src={r.photo_urls[0]}
                         alt={r.pet_name ?? ""}
                         fill
                         className="object-cover"
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                        Sin foto
+                      </span>
+                    )}
+                  </div>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       {r.pet_name}

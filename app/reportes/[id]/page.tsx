@@ -155,13 +155,29 @@ export default async function ReporteDetallePage({
                     <p className="mt-1 text-sm text-muted-foreground">{s.notes}</p>
                   )}
                   {s.photo_urls[0] && (
-                    <Image
-                      src={s.photo_urls[0]}
-                      alt="Foto del avistamiento"
-                      width={320}
-                      height={180}
-                      className="mt-2 rounded-md object-cover"
-                    />
+                    // Miniatura recortada para poder comparar varios de un
+                    // vistazo, con la foto original a un toque: el recorte
+                    // podría cortar justo la seña que decide (una mancha, el
+                    // collar), así que nunca es la única versión disponible.
+                    <a
+                      href={s.photo_urls[0]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 block w-full max-w-60"
+                    >
+                      <span className="relative block aspect-video w-full overflow-hidden rounded-md">
+                        <Image
+                          src={s.photo_urls[0]}
+                          alt="Foto del avistamiento"
+                          fill
+                          sizes="240px"
+                          className="object-cover"
+                        />
+                      </span>
+                      <span className="mt-1 block text-xs text-muted-foreground underline">
+                        Ver la foto completa
+                      </span>
+                    </a>
                   )}
                   {match && (
                     <MatchReview
