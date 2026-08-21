@@ -357,3 +357,35 @@ Nota: el recorte se dejó centrado (`object-cover` a secas). Con fotos
 arbitrarias de vecinos, centrar es la apuesta segura; sesgarlo hacia arriba
 ayudaría a los retratos verticales y perjudicaría a los horizontales, y el
 enlace a la foto completa ya cubre el caso.
+
+## 2026-08-21 — Encender "Confirm email" destapó tres bloqueadores
+
+Encendí "Confirm email" y lo di por terminado. No lo estaba: verificar
+correos no sirve de nada si no se pueden enviar. Al revisar el camino que
+acababa de volver obligatorio aparecieron tres cosas rotas, ninguna
+visible desde el código.
+
+1. **SMTP integrado, topado a 2 correos/hora.** El campo ni siquiera es
+   editable en plan Free. Con "Confirm email" encendido, eso significa
+   **dos registros nuevos por hora** — contra una métrica de piloto de 100
+   mascotas. El propio dashboard lo advierte: "not meant to be used for
+   production apps". Requiere Resend + dominio. **Sigue pendiente.**
+2. **Site URL era `http://localhost:3000`.** Cada link de confirmación
+   habría llevado al vecino a su propio localhost. Corregido a
+   `https://de-vuelta.vercel.app` (cambiar al dominio propio cuando exista).
+3. **La plantilla del correo era la de fábrica**: en inglés, y usando
+   `{{ .ConfirmationURL }}`, que **no pasa por `/auth/confirm`** — el route
+   que la Fase 2 dejó construido justo para esto. Ese formato manda al
+   endpoint de verificación de Supabase, que devuelve los tokens en el
+   fragmento de la URL: ilegible desde el servidor en una app SSR.
+   Reescrita en español y apuntando a
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`.
+
+Lección para la próxima: un ajuste de infraestructura no está "hecho"
+cuando el toggle queda verde, sino cuando el camino que habilita se probó
+de punta a punta. Los tres se encontraron mirando, no razonando —
+y verificando contra la API (`/auth/v1/settings`) en vez de confiar en el
+toast de la UI, que la primera vez dijo éxito sin guardar nada.
+
+**Sin probar todavía**: el registro real por formulario. No se puede cerrar
+hasta que haya SMTP propio.

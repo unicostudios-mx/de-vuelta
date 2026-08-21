@@ -110,10 +110,14 @@ OJO: las marcadas **Sensitive** en Vercel (`SUPABASE_SERVICE_ROLE_KEY`,
 
 ## Pendientes conocidos
 
-- **Antes del piloto (Fase 9)**: reactivar "Confirm email" en Supabase
-  (hoy apagado). OJO: reactivarlo NO estorba las pruebas — las cuentas de
-  prueba se crean con la Admin API y `email_confirm: true`, que se lo
-  salta. Solo afecta el registro por el formulario.
+- **BLOQUEADOR del piloto — SMTP propio**: "Confirm email" ya está
+  ENCENDIDO (2026-08-21), pero el proyecto usa el SMTP integrado de
+  Supabase, limitado a **2 correos/hora** y con el campo no editable en
+  plan Free. Es decir: hoy la app admite 2 registros por hora. Hace falta
+  SMTP propio (Resend) + dominio antes de abrir a usuarios reales. El
+  dashboard mismo lo advierte: "not meant to be used for production apps".
+  Las cuentas de prueba NO se ven afectadas: se crean con la Admin API y
+  `email_confirm: true`, que se salta el mailer.
 - ~~Vistazo visual humano a los mapas~~: HECHO (2026-08-20) vía Claude in
   Chrome, que sí compone el canvas (el panel de navegador de Claude Code
   no). Ambos mapas correctos: `/perdidos` con pines rojos y popup
