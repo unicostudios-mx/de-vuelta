@@ -114,10 +114,12 @@ OJO: las marcadas **Sensitive** en Vercel (`SUPABASE_SERVICE_ROLE_KEY`,
   (hoy apagado). OJO: reactivarlo NO estorba las pruebas — las cuentas de
   prueba se crean con la Admin API y `email_confirm: true`, que se lo
   salta. Solo afecta el registro por el formulario.
-- **Vistazo visual humano a los mapas**: el panel de navegador de las
-  sesiones de Claude no compone el canvas de Mapbox, así que
-  `/perdidos` y el detalle del dueño se verificaron por evidencia
-  indirecta. Un `npm run dev` de 2 minutos lo confirma.
+- ~~Vistazo visual humano a los mapas~~: HECHO (2026-08-20) vía Claude in
+  Chrome, que sí compone el canvas (el panel de navegador de Claude Code
+  no). Ambos mapas correctos: `/perdidos` con pines rojos y popup
+  "Ver reporte"; detalle del dueño con pin rojo + verdes y zoom ajustado a
+  los pines. OJO: los tiles tardan ~4 s en pintar — una captura inmediata
+  muestra el mapa en blanco y parece roto.
 - **Deuda menor**: las rutas con mapa pesan ~620-650 kB First Load por
   `mapbox-gl`; candidato a `next/dynamic` si llega a molestar.
 - **Sin implementar**: el estado `expired` de reportes (necesita un job
